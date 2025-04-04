@@ -1,0 +1,9 @@
+# core repo:
+gateware/core/cv32e40p
+# Kurulum için:
+#   "gateware/core/Makefile"'ı, 
+#   "make setup" ile yürüt
+
+# core - verialtor çıktıları:
+gateware/core/build
+gateware/core/obj_dir
