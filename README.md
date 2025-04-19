@@ -31,4 +31,4 @@ serimi
 ![Tasarım](tasarımlar/görseller/YONGA-TASARIM-TOP_v2.0.drawio.png)
 
 ## İş Planı
-![İş Planı](tasarımlar/görseller/isPlani.png)
+![İş Planı](tasarımlar/görseller/isPlani.jpg)
