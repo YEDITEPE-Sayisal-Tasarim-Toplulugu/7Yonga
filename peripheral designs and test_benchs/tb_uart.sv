@@ -112,7 +112,7 @@ module uart_tb;
         end
     endtask
     
-    // AXI4-Lite okuma işlemi - daha basit stil
+    // AXI4-Lite okuma işlemi 
     task axi_read;
         input [31:0] addr;
         output [31:0] data;
@@ -144,7 +144,7 @@ module uart_tb;
     endtask
     
     // Flag bekleyen task - daha basit stil
-    // CFG register'da belirli bir bitin 1 olmasını bekleyen task - düzeltilmiş versiyon
+    // CFG register'da belirli bir bitin 1 olmasını bekleyen task 
     task wait_for_flag;
         input [31:0] bit_index;
         input [31:0] max_cycles;

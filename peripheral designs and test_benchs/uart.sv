@@ -200,7 +200,6 @@ module uart (
                 s_axi_rvalid <= 1'b1;
                 s_axi_rresp  <= 2'b00; // OKAY
                 
-                // Register okuma
                 case (axi_araddr[7:0])
                     UART_CPB: s_axi_rdata <= uart_cpb_reg;
                     UART_STP: s_axi_rdata <= uart_stp_reg;
@@ -222,11 +221,11 @@ module uart (
     //----------------------------------------------------------------------
     always_comb begin
         if (uart_stp_reg[1:0] == 2'b00)
-            stop_cycles = uart_cpb_reg; // 1 stop bit
+            stop_cycles = uart_cpb_reg; 
         else if (uart_stp_reg[1:0] == 2'b01)
-            stop_cycles = uart_cpb_reg + (uart_cpb_reg >> 1); // 1.5 stop bits
+            stop_cycles = uart_cpb_reg + (uart_cpb_reg >> 1); 
         else
-            stop_cycles = uart_cpb_reg << 1; // 2 stop bits
+            stop_cycles = uart_cpb_reg << 1;
     end
     
     //----------------------------------------------------------------------
@@ -239,18 +238,16 @@ module uart (
             tx_done <= 1'b0;
             tx_counter <= 32'd0;
             tx_bit_idx <= 3'd0;
-            uart_tx <= 1'b1; // Idle high
+            uart_tx <= 1'b1;
         end else begin
-            // Varsayılan atamalar
             tx_done <= 1'b0;
             
             case (tx_state)
                 IDLE: begin
-                    uart_tx <= 1'b1; // Idle high
+                    uart_tx <= 1'b1;
                     tx_counter <= 32'd0;
                     tx_bit_idx <= 3'd0;
                     
-                    // Check if transmit is enabled by software and not already active
                     if (uart_cfg_reg[0] && (tx_data_updated || !tx_active)) begin
                         tx_active <= 1'b1;
                         tx_state <= START;
@@ -320,7 +317,6 @@ module uart (
             rx_bit_idx <= 3'd0;
             rx_data <= 8'd0;
         end else begin
-            // Varsayılan atamalar
             rx_done <= 1'b0;
             
             case (rx_state)
@@ -329,7 +325,6 @@ module uart (
                     rx_counter <= 32'd0;
                     rx_bit_idx <= 3'd0;
                     
-                    // Detect start bit (falling edge)
                     if (uart_rx == 1'b0 && !rx_active) begin
                         rx_state <= START;
                         rx_active <= 1'b1;
@@ -338,17 +333,15 @@ module uart (
                 end
                 
                 START: begin
-                    // Wait for half a bit time to sample in the middle of the start bit
                     if (rx_counter < (uart_cpb_reg >> 1) - 1) begin
                         rx_counter <= rx_counter + 1;
                     end else begin
                         rx_counter <= 32'd0;
-                        // Verify still low (valid start bit)
                         if (uart_rx == 1'b0) begin
                             rx_state <= DATA;
                             $display("RX: Valid start bit confirmed");
                         end else begin
-                            rx_state <= IDLE; // False start
+                            rx_state <= IDLE; 
                             rx_active <= 1'b0;
                             $display("RX: False start detected");
                         end
@@ -356,12 +349,11 @@ module uart (
                 end
                 
                 DATA: begin
-                    // Sample in the middle of each data bit
                     if (rx_counter < uart_cpb_reg - 1) begin
                         rx_counter <= rx_counter + 1;
                     end else begin
                         rx_counter <= 32'd0;
-                        rx_data[rx_bit_idx] <= uart_rx; // Sample bit
+                        rx_data[rx_bit_idx] <= uart_rx; 
                         $display("RX: Sampled bit %0d = %0d", rx_bit_idx, uart_rx);
                         
                         if (rx_bit_idx < 7) begin
@@ -375,7 +367,6 @@ module uart (
                 end
                 
                 STOP: begin
-                    // Wait for stop bit
                     if (rx_counter < uart_cpb_reg - 1) begin
                         rx_counter <= rx_counter + 1;
                     end else begin
@@ -383,12 +374,11 @@ module uart (
                         rx_state <= IDLE;
                         rx_active <= 1'b0;
                         
-                        // Validate stop bit (should be high)
                         if (uart_rx == 1'b1) begin
-                            rx_done <= 1'b1; // Data received successfully
+                            rx_done <= 1'b1; 
                             $display("RX: Stop bit valid, reception complete for byte 0x%h", rx_data);
                         end else begin
-                            // Framing error - could add error handling here
+                    
                             $display("RX: Framing error, invalid stop bit");
                         end
                     end
