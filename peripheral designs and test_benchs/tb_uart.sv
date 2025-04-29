@@ -1,266 +1,301 @@
 module uart_tb;
-    //Testing in different baud rates and TX and RX of course.
-    // Clock and reset signals
-    logic        clk;
-    logic        rst_n;
+    // Sistem sinyalleri
+    reg clk;
+    reg rst_n;
     
-    // AXI4-Lite interface
-    logic        psel;
-    logic        penable;
-    logic        pwrite;
-    logic [31:0] paddr;
-    logic [31:0] pwdata;
-    logic [31:0] prdata;
-    logic        pready;
+    // AXI4-Lite arayüzü
+    reg [31:0] s_axi_awaddr;
+    reg        s_axi_awvalid;
+    wire       s_axi_awready;
+    reg [31:0] s_axi_wdata;
+    reg [3:0]  s_axi_wstrb;
+    reg        s_axi_wvalid;
+    wire       s_axi_wready;
+    wire [1:0] s_axi_bresp;
+    wire       s_axi_bvalid;
+    reg        s_axi_bready;
+    reg [31:0] s_axi_araddr;
+    reg        s_axi_arvalid;
+    wire       s_axi_arready;
+    wire [31:0] s_axi_rdata;
+    wire [1:0]  s_axi_rresp;
+    wire        s_axi_rvalid;
+    reg         s_axi_rready;
     
-    // UART loopback (connect TX to RX for testing)
-    logic        uart_rx;
-    logic        uart_tx;
+    // UART pinleri
+    wire uart_rx;
+    wire uart_tx;
     
-    // Variables for storing read data
-    logic [31:0] cfg_value;
-    logic [31:0] rx_data;
-    logic [31:0] divisor; // CPB değerini takip etmek için değişken
+    // Test değişkenleri
+    reg [31:0] divisor;
+    reg [31:0] rx_data;
+    reg [31:0] cfg_value;
+    integer    i;
     
-    // Constants
-    localparam CLK_PERIOD = 10; // 100 MHz clock
+    // Sabitler
+    parameter CLK_PERIOD = 10; // 100 MHz saat
     
-    // UART registers addresses (offset from base address)
-    localparam UART_CPB = 8'h00; // Clock-per-bit register
-    localparam UART_STP = 8'h04; // Stop-bit register
-    localparam UART_RDR = 8'h08; // Read data register
-    localparam UART_TDR = 8'h0C; // Transmit data register
-    localparam UART_CFG = 8'h10; // Configuration register
+    // UART register adresleri
+    parameter UART_CPB = 8'h00; // Clock-per-bit register
+    parameter UART_STP = 8'h04; // Stop-bit register
+    parameter UART_RDR = 8'h08; // Read data register
+    parameter UART_TDR = 8'h0C; // Transmit data register
+    parameter UART_CFG = 8'h10; // Configuration register
     
-    // Instantiate UART DUT
+    // UART modülü
     uart dut (
-        .clk(clk),
-        .rst_n(rst_n),
-        .psel(psel),
-        .penable(penable),
-        .pwrite(pwrite),
-        .paddr(paddr),
-        .pwdata(pwdata),
-        .prdata(prdata),
-        .pready(pready),
+        .s_axi_aclk(clk),
+        .s_axi_aresetn(rst_n),
+        .s_axi_awaddr(s_axi_awaddr),
+        .s_axi_awvalid(s_axi_awvalid),
+        .s_axi_awready(s_axi_awready),
+        .s_axi_wdata(s_axi_wdata),
+        .s_axi_wstrb(s_axi_wstrb),
+        .s_axi_wvalid(s_axi_wvalid),
+        .s_axi_wready(s_axi_wready),
+        .s_axi_bresp(s_axi_bresp),
+        .s_axi_bvalid(s_axi_bvalid),
+        .s_axi_bready(s_axi_bready),
+        .s_axi_araddr(s_axi_araddr),
+        .s_axi_arvalid(s_axi_arvalid),
+        .s_axi_arready(s_axi_arready),
+        .s_axi_rdata(s_axi_rdata),
+        .s_axi_rresp(s_axi_rresp),
+        .s_axi_rvalid(s_axi_rvalid),
+        .s_axi_rready(s_axi_rready),
         .uart_rx(uart_rx),
         .uart_tx(uart_tx)
     );
     
-    // Connect TX to RX for loopback testing
+    // TX'i RX'e bağla (loopback testi için)
     assign uart_rx = uart_tx;
     
-    // Clock generation
+    // Saat üretimi
     always begin
         clk = 0; #(CLK_PERIOD/2);
         clk = 1; #(CLK_PERIOD/2);
     end
     
-    // Task for AXI4-Lite write transaction
-    task axi_write(input [31:0] addr, input [31:0] data);
-        // Setup phase
-        psel <= 1'b1;
-        pwrite <= 1'b1;
-        paddr <= addr;
-        pwdata <= data;
-        penable <= 1'b0;
-        @(posedge clk);
-        
-        // Access phase
-        penable <= 1'b1;
-        wait (pready);
-        @(posedge clk);
-        
-        // End transaction
-        psel <= 1'b0;
-        penable <= 1'b0;
-        @(posedge clk);
-        
-        // CPB değerini takip etme
-        if (addr == UART_CPB) begin
-            divisor = data;
-            $display("Updated CPB value to %0d", divisor);
-        end
-    endtask
-    
-    // Task for AXI4-Lite read transaction
-    task axi_read(input [31:0] addr, output [31:0] data);
-        // Setup phase
-        psel <= 1'b1;
-        pwrite <= 1'b0;
-        paddr <= addr;
-        penable <= 1'b0;
-        @(posedge clk);
-        
-        // Access phase
-        penable <= 1'b1;
-        wait (pready);
-        data = prdata;
-        @(posedge clk);
-        
-        // End transaction
-        psel <= 1'b0;
-        penable <= 1'b0;
-        @(posedge clk);
-    endtask
-    
-    // Task to wait for a specific bit to become 1 in CFG register
-    task wait_for_flag(input int bit_index, input int max_cycles = 10000);
-        int count = 0;
-        logic [31:0] temp_cfg;
-        
-        while (count < max_cycles) begin
-            axi_read(UART_CFG, temp_cfg);
-            if (temp_cfg[bit_index] == 1'b1) begin
-                cfg_value = temp_cfg;  // Save the value for the caller
-                break;
+    // AXI4-Lite yazma işlemi - daha basit stil
+    task axi_write;
+        input [31:0] addr;
+        input [31:0] data;
+        begin
+            // AXI sinyallerini ayarla
+            s_axi_awaddr = addr;
+            s_axi_awvalid = 1'b1;
+            s_axi_wdata = data;
+            s_axi_wstrb = 4'hF;
+            s_axi_wvalid = 1'b1;
+            s_axi_bready = 1'b1;
+            
+            // Adres ve veri kabul edilene kadar bekle
+            while (!(s_axi_awready && s_axi_wready)) @(posedge clk);
+            
+            // Adres ve veri geçerli sinyalleri temizle
+            @(posedge clk);
+            s_axi_awvalid = 1'b0;
+            s_axi_wvalid = 1'b0;
+            
+            // Yanıt bekle
+            while (!s_axi_bvalid) @(posedge clk);
+            
+            // Yanıt alma işlemi tamamlandı
+            @(posedge clk);
+            s_axi_bready = 1'b0;
+            
+            // CPB değerini takip et
+            if (addr == UART_CPB) begin
+                divisor = data;
+                $display("CPB değeri güncellendi: %0d", data);
             end
-            count++;
-            #(CLK_PERIOD * 10);  // Wait 10 cycles between reads
-        end
-        
-        if (count >= max_cycles) begin
-            $display("Timeout waiting for bit %0d in CFG register", bit_index);
         end
     endtask
     
-    // Test sequence
+    // AXI4-Lite okuma işlemi - daha basit stil
+    task axi_read;
+        input [31:0] addr;
+        output [31:0] data;
+        begin
+            // Adres ayarla
+            s_axi_araddr = addr;
+            s_axi_arvalid = 1'b1;
+            s_axi_rready = 1'b1;
+            
+            // Adres kabul edilene kadar bekle
+            while (!s_axi_arready) @(posedge clk);
+            
+            // Adres geçerli sinyalini temizle
+            @(posedge clk);
+            s_axi_arvalid = 1'b0;
+            
+            // Veri hazır olana kadar bekle
+            while (!s_axi_rvalid) @(posedge clk);
+            
+            // Veriyi al
+            data = s_axi_rdata;
+            
+            // Veri alma işlemi tamamlandı
+            @(posedge clk);
+            s_axi_rready = 1'b0;
+            
+            $display("Adres 0x%h'den okunan değer: 0x%h", addr, data);
+        end
+    endtask
+    
+    // Flag bekleyen task - daha basit stil
+    // CFG register'da belirli bir bitin 1 olmasını bekleyen task - düzeltilmiş versiyon
+    task wait_for_flag;
+        input [31:0] bit_index;
+        input [31:0] max_cycles;
+        begin
+            reg [31:0] count;
+            reg [31:0] temp_cfg;
+            reg flag_found;  // Flag'in bulunup bulunmadığını takip eden bayrak
+            
+            count = 0;
+            flag_found = 0;  // Başlangıçta flag bulunmadı
+            
+            while (count < max_cycles && !flag_found) begin
+                axi_read(UART_CFG, temp_cfg);
+                
+                if (temp_cfg[bit_index] == 1'b1) begin
+                    cfg_value = temp_cfg;  // Çağıran için değeri sakla
+                    $display("Flag bit %0d is set! CFG=0x%h", bit_index, cfg_value);
+                    flag_found = 1;  // Flag bulundu, döngüden çıkılacak
+                end
+                else begin
+                    count = count + 1;
+                    
+                    // Okumalar arasında bekle
+                    for (i = 0; i < 10; i = i + 1) @(posedge clk);
+                end
+            end
+            
+            // Sadece gerçekten timeout olduysa mesaj göster
+            if (!flag_found) begin
+                $display("CFG register'da bit %0d beklerken timeout!", bit_index);
+            end
+        end
+    endtask
+    
+    // Test sekansı
     initial begin
-        // Initialize signals
-        psel = 0;
-        penable = 0;
-        pwrite = 0;
-        paddr = 0;
-        pwdata = 0;
+        // Sinyalleri başlat
+        s_axi_awvalid = 0;
+        s_axi_wvalid = 0;
+        s_axi_bready = 0;
+        s_axi_arvalid = 0;
+        s_axi_rready = 0;
+        s_axi_wstrb = 4'hF;
         rst_n = 1;
         divisor = 0;
         
-        // Apply reset
+        // Reset uygula
+        $display("Reset uygulanıyor...");
         #20 rst_n = 0;
         #20 rst_n = 1;
+        #20;
         
-        $display("Starting UART test with 9600 baud rate equivalent");
+        $display("9600 baud rate eşdeğeri ile UART testi başlıyor");
         
-        // Configure UART
-        // Use a small divisor for simulation speed
+        // UART yapılandır (simülasyon hızı için küçük bir bölen kullan)
         axi_write(UART_CPB, 50);
         
-        // Set stop bits to 1
+        // Stop bitlerini 1 olarak ayarla
         axi_write(UART_STP, 0);
         
-        // Send character 'A' (ASCII 65 or 0x41)
+        // 'A' karakterini gönder (ASCII 65 veya 0x41)
         axi_write(UART_TDR, 8'h41);
         
-        // Enable transmission
-        axi_write(UART_CFG, 1); // Bit 0 is TX enable
-        $display("Sent TX command, waiting for completion...");
+        // İletimi etkinleştir
+        axi_write(UART_CFG, 1); // Bit 0, TX enable
+        $display("TX komutu gönderildi, tamamlanması bekleniyor...");
         
-        // Wait for TX completed flag (bit 2)
-        wait_for_flag(2);
+        // TX tamamlama flag'ini bekle (bit 2)
+        wait_for_flag(2, 10000);
         
-        $display("TX completed flag detected in CFG register = 0x%h", cfg_value);
+        $display("TX tamamlandı flag'i tespit edildi = 0x%h", cfg_value);
         
-        // Give the RX a chance to complete - it may happen slightly after TX complete
-        #(50 * CLK_PERIOD);
+        // RX tamamlanması için biraz zaman ver
+        for (i = 0; i < 100; i = i + 1) @(posedge clk);
         
-        // Wait for RX data received flag (bit 1)
-        wait_for_flag(1);
+        // RX veri alındı flag'ini bekle (bit 1)
+        wait_for_flag(1, 10000);
         
-        $display("RX completed flag detected in CFG register = 0x%h", cfg_value);
+        $display("RX tamamlandı flag'i tespit edildi = 0x%h", cfg_value);
         
-        // IMPROVED: Wait for a full frame time after RX flag detection
-        $display("Waiting for %0d clock cycles (12 * divisor) before reading RDR", divisor * 12);
-        repeat (divisor * 12) @(posedge clk);
+        // RX flag tespitinden sonra tam bir çerçeve süresi bekle
+        $display("%0d saat çevrimi bekleniyor (12 * divisor) RDR okumadan önce", divisor * 12);
+        for (i = 0; i < divisor * 12; i = i + 1) @(posedge clk);
         
-        // Read received data
+        // Alınan veriyi oku
         axi_read(UART_RDR, rx_data);
-        $display("Data received: 0x%h", rx_data[7:0]);
+        $display("Alınan veri: 0x%h", rx_data[7:0]);
         
-        // Clear both status flags
-        axi_write(UART_CFG, 1); // TX enable, clear status flags
+        // Durum flag'lerini temizle
+        axi_write(UART_CFG, 1); // TX enable, durum flag'lerini temizle
         
-        // Verify received data is correct
+        // Alınan verinin doğru olup olmadığını kontrol et
         if (rx_data[7:0] == 8'h41) begin
-            $display("Test PASSED: Received correct data 'A'");
+            $display("Test BAŞARILI: Doğru veri alındı 'A'");
         end
         else begin
-            $display("Test FAILED: Received incorrect data 0x%h, expected 0x41", rx_data[7:0]);
+            $display("Test BAŞARISIZ: Yanlış veri alındı 0x%h, beklenen 0x41", rx_data[7:0]);
         end
         
-        // Allow some time for the system to settle
-        #(100 * CLK_PERIOD);
+        // Sisteme yerleşmesi için biraz zaman ver
+        for (i = 0; i < 100; i = i + 1) @(posedge clk);
         
-        $display("\nStarting UART test with higher baud rate");
+        // Daha yüksek baud rate testi
+        $display("\nDaha yüksek baud rate ile UART testi başlıyor");
         
-        // Test another baud rate (using 10 for simulation speed)
+        // Baud rate'i değiştir (simulasyon için 10 kullan)
         axi_write(UART_CPB, 10);
         
-        // Send character 'B' (ASCII 66 or 0x42)
+        // 'B' karakterini gönder (ASCII 66 veya 0x42)
         axi_write(UART_TDR, 8'h42);
         
-        // Enable transmission (should already be enabled)
+        // İletimi etkinleştir (zaten aktif olmalı)
         axi_write(UART_CFG, 1);
-        $display("Sent second TX command at higher baud rate");
+        $display("Yüksek baud rate ile ikinci TX komutu gönderildi");
         
-        // Wait for TX completed flag (bit 2)
-        wait_for_flag(2);
+        // TX tamamlama flag'ini bekle (bit 2)
+        wait_for_flag(2, 10000);
         
-        $display("Second TX completed flag detected in CFG register = 0x%h", cfg_value);
+        $display("Yüksek baud rate, TX tamamlandı flag'i tespit edildi = 0x%h", cfg_value);
         
-        // Give the RX a chance to complete
-        #(20 * CLK_PERIOD);
+        // RX tamamlanması için biraz zaman ver
+        for (i = 0; i < 50; i = i + 1) @(posedge clk);
         
-        // Wait for RX data received flag (bit 1)
-        wait_for_flag(1);
+        // RX veri alındı flag'ini bekle (bit 1)
+        wait_for_flag(1, 10000);
         
-        $display("Second RX completed flag detected in CFG register = 0x%h", cfg_value);
+        $display("Yüksek baud rate, RX tamamlandı flag'i tespit edildi = 0x%h", cfg_value);
         
-        // IMPROVED: Wait for a full frame time after RX flag detection
-        $display("Waiting for %0d clock cycles (12 * divisor) before reading RDR", divisor * 12);
-        repeat (divisor * 12) @(posedge clk);
+        // RX flag tespitinden sonra tam bir çerçeve süresi bekle
+        $display("%0d saat çevrimi bekleniyor (12 * divisor) RDR okumadan önce", divisor * 12);
+        for (i = 0; i < divisor * 12; i = i + 1) @(posedge clk);
         
-        // Read received data
+        // Alınan veriyi oku
         axi_read(UART_RDR, rx_data);
-        $display("Data received at higher baud rate: 0x%h", rx_data[7:0]);
+        $display("Yüksek baud rate ile alınan veri: 0x%h", rx_data[7:0]);
         
-        // Clear both status flags
-        axi_write(UART_CFG, 1); // TX enable, clear status flags
+        // Durum flag'lerini temizle
+        axi_write(UART_CFG, 1); // TX enable, durum flag'lerini temizle
         
-        // Verify received data is correct
+        // Alınan verinin doğru olup olmadığını kontrol et
         if (rx_data[7:0] == 8'h42) begin
-            $display("Test PASSED: Received correct data 'B' at higher baud rate");
+            $display("Test BAŞARILI: Yüksek baud rate ile doğru veri alındı 'B'");
         end
         else begin
-            $display("Test FAILED: Received incorrect data 0x%h, expected 0x42", rx_data[7:0]);
-            
-            // Try waiting a bit more and reading again
-            #(50 * CLK_PERIOD);
-            
-            // Wait for another RX data received flag (bit 1)
-            wait_for_flag(1);
-            
-            // IMPROVED: Wait for a full frame time after RX flag detection
-            $display("Waiting for %0d clock cycles (12 * divisor) before second read", divisor * 12);
-            repeat (divisor * 12) @(posedge clk);
-            
-            // Read received data again
-            axi_read(UART_RDR, rx_data);
-            $display("Second read attempt - Data received: 0x%h", rx_data[7:0]);
-            
-            if (rx_data[7:0] == 8'h42) begin
-                $display("Test PASSED on second attempt: Received correct data 'B'");
-            end
+            $display("Test BAŞARISIZ: Yüksek baud rate ile yanlış veri alındı 0x%h, beklenen 0x42", rx_data[7:0]);
         end
         
-        // End simulation
-        $display("Tests completed");
+        // Testleri bitir
+        $display("Tüm testler tamamlandı");
+        axi_write(UART_CFG, 0); // TX'i kapat
         #1000 $finish;
-    end
-    
-    // Optional: Save waveforms
-    initial begin
-        $dumpfile("uart_tb.vcd");
-        $dumpvars(0, uart_tb);
     end
     
 endmodule

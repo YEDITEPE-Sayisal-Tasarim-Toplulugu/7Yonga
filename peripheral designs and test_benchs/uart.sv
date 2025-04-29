@@ -1,51 +1,70 @@
 module uart (
     // Clock and reset signals
-    input  logic        clk,
-    input  logic        rst_n,
+    input  logic        s_axi_aclk,
+    input  logic        s_axi_aresetn,
     
-    // AXI4-Lite interface
-    input  logic        psel,
-    input  logic        penable,
-    input  logic        pwrite,
-    input  logic [31:0] paddr,
-    input  logic [31:0] pwdata,
-    output logic [31:0] prdata,
-    output logic        pready,
+    // AXI4-Lite Slave Arayüzü
+    // Write Address Channel
+    input  logic [31:0] s_axi_awaddr,
+    input  logic        s_axi_awvalid,
+    output logic        s_axi_awready,
+    
+    // Write Data Channel
+    input  logic [31:0] s_axi_wdata,
+    input  logic [3:0]  s_axi_wstrb,
+    input  logic        s_axi_wvalid,
+    output logic        s_axi_wready,
+    
+    // Write Response Channel
+    output logic [1:0]  s_axi_bresp,
+    output logic        s_axi_bvalid,
+    input  logic        s_axi_bready,
+    
+    // Read Address Channel
+    input  logic [31:0] s_axi_araddr,
+    input  logic        s_axi_arvalid,
+    output logic        s_axi_arready,
+    
+    // Read Data Channel
+    output logic [31:0] s_axi_rdata,
+    output logic [1:0]  s_axi_rresp,
+    output logic        s_axi_rvalid,
+    input  logic        s_axi_rready,
     
     // UART pins
     input  logic        uart_rx,
     output logic        uart_tx
 );
-    // Register addresses (offset from base address)
+    // Register adresleri 
     localparam UART_CPB = 8'h00; // Clock-per-bit register
     localparam UART_STP = 8'h04; // Stop-bit register
     localparam UART_RDR = 8'h08; // Read data register
     localparam UART_TDR = 8'h0C; // Transmit data register
     localparam UART_CFG = 8'h10; // Configuration register
     
-    // Register definitions
+    // Register tanımları
     logic [31:0] uart_cpb_reg;  // Clock-per-bit register
     logic [31:0] uart_stp_reg;  // Stop-bit register
     logic [31:0] uart_rdr_reg;  // Read data register
     logic [31:0] uart_tdr_reg;  // Transmit data register
     logic [31:0] uart_cfg_reg;  // Configuration register
-    logic tx_data_updated;      // Signal to indicate TDR has been updated
-    logic rx_data_updated;      // Signal to indicate RDR has been updated
+    logic tx_data_updated;      // TDR güncellendiğinde set edilir
+    logic rx_data_updated;      // RDR güncellendiğinde set edilir
 
-    // States for TX and RX state machines
+    // TX ve RX durum makineleri
     localparam IDLE  = 2'b00;
     localparam START = 2'b01;
     localparam DATA  = 2'b10;
     localparam STOP  = 2'b11;
     
-    // TX signals
+    // TX sinyalleri
     logic [1:0] tx_state;
     logic tx_active;
     logic tx_done;
     logic [31:0] tx_counter;
     logic [2:0] tx_bit_idx;
     
-    // RX signals
+    // RX sinyalleri
     logic [1:0] rx_state;
     logic rx_active;
     logic rx_done;
@@ -53,97 +72,154 @@ module uart (
     logic [2:0] rx_bit_idx;
     logic [7:0] rx_data;
     
-    // Stop bits calculation
+    // Stop bits hesaplama
     logic [31:0] stop_cycles;
     
-    // AXI4-Lite interface
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+    // AXI handshake yardımcı değişkenleri
+    logic        aw_en;
+    logic [31:0] axi_awaddr;
+    logic [31:0] axi_araddr;
+    
+    //----------------------------------------------------------------------
+    // AXI4-Lite Arayüzü - Yazma Kanalı
+    //----------------------------------------------------------------------
+    always_ff @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
+        if (!s_axi_aresetn) begin
+            s_axi_awready <= 1'b0;
+            s_axi_wready  <= 1'b0;
+            s_axi_bvalid  <= 1'b0;
+            s_axi_bresp   <= 2'b00;
+            aw_en         <= 1'b1;
+            axi_awaddr    <= 32'd0;
+            
+            // Register sıfırlama
             uart_cpb_reg <= 32'd0;
             uart_stp_reg <= 32'd0;
-            uart_rdr_reg <= 32'd0;
             uart_tdr_reg <= 32'd0;
             uart_cfg_reg <= 32'd0;
-            pready <= 1'b0;
             tx_data_updated <= 1'b0;
             rx_data_updated <= 1'b0;
         end else begin
-            // Default assignment
-            pready <= 1'b0;
+            // Varsayılan değer
             tx_data_updated <= 1'b0;
             
-            // Update status registers based on hardware events (prioritized before register writes)
+            // AWREADY (adres kabulü)
+            if (!s_axi_awready && s_axi_awvalid && s_axi_wvalid && aw_en) begin
+                s_axi_awready <= 1'b1;
+                axi_awaddr    <= s_axi_awaddr;
+                aw_en         <= 1'b0;
+            end else if (s_axi_bready && s_axi_bvalid) begin
+                s_axi_awready <= 1'b0;
+                aw_en         <= 1'b1;
+            end
+            
+            // WREADY (veri kabulü)
+            if (!s_axi_wready && s_axi_wvalid && s_axi_awvalid && aw_en) begin
+                s_axi_wready <= 1'b1;
+            end else begin
+                s_axi_wready <= 1'b0;
+            end
+            
+            // Write response
+            if (s_axi_awready && s_axi_awvalid && !s_axi_bvalid && s_axi_wready && s_axi_wvalid) begin
+                s_axi_bvalid <= 1'b1;
+                s_axi_bresp  <= 2'b00; // OKAY
+            end else if (s_axi_bvalid && s_axi_bready) begin
+                s_axi_bvalid <= 1'b0;
+            end
+            
+            // Donanım olayları (register yazma işlemleri daha öncelikli)
             if (rx_done) begin
-                uart_rdr_reg <= {24'b0, rx_data}; // Update RX data register
-                rx_data_updated <= 1'b1; // Mark RDR as updated
+                uart_rdr_reg <= {24'b0, rx_data}; // RX veri register güncelleme
+                rx_data_updated <= 1'b1; // RDR güncellendiğini işaretle
                 $display("RDR updated with 0x%h, will set RX flag next cycle", rx_data);
             end
             
-            // Set RX flag a cycle after data is updated
+            // RX flag'i, veri güncellendikten bir çevrim sonra ayarla
             if (rx_data_updated) begin
-                uart_cfg_reg[1] <= 1'b1; // Set data received flag
-                rx_data_updated <= 1'b0; // Reset the updated signal
+                uart_cfg_reg[1] <= 1'b1; // Data received flag ayarla
+                rx_data_updated <= 1'b0; // Güncelleme sinyalini sıfırla
                 $display("Setting RX flag for data 0x%h", uart_rdr_reg[7:0]);
             end
             
             if (tx_done) begin
-                uart_cfg_reg[2] <= 1'b1; // Set TX completed flag
+                uart_cfg_reg[2] <= 1'b1; // TX completed flag ayarla
                 $display("Setting TX completed flag");
             end
             
-            // Handle register writes
-            if (psel && penable && pwrite) begin
-                pready <= 1'b1;
-                case (paddr[7:0])
-                    UART_CPB: uart_cpb_reg <= pwdata;
-                    UART_STP: uart_stp_reg <= pwdata;
+            // Register yazma işlemi - sadece adres ve veri hazır olduğunda
+            if (s_axi_awready && s_axi_awvalid && s_axi_wready && s_axi_wvalid) begin
+                case (axi_awaddr[7:0])
+                    UART_CPB: uart_cpb_reg <= s_axi_wdata;
+                    UART_STP: uart_stp_reg <= s_axi_wdata;
                     UART_TDR: begin
-                        uart_tdr_reg <= pwdata;
-                        tx_data_updated <= 1'b1; // Mark TDR as updated
-                        $display("TDR updated with 0x%h", pwdata[7:0]);
+                        uart_tdr_reg <= s_axi_wdata;
+                        tx_data_updated <= 1'b1; // TDR güncellendiğini işaretle
+                        $display("TDR updated with 0x%h", s_axi_wdata[7:0]);
                     end
                     UART_CFG: begin
-                        // Always update TX enable bit
-                        uart_cfg_reg[0] <= pwdata[0];
+                        // TX enable bitini her zaman güncelle
+                        uart_cfg_reg[0] <= s_axi_wdata[0];
                         
-                        // Allow software to clear status bits by writing 0
-                        if (pwdata[1] == 1'b0) begin 
-                            uart_cfg_reg[1] <= 1'b0; // Clear received flag
+                        // Yazılım flag'leri sadece 0 yazmakla temizleyebilir
+                        if (s_axi_wdata[1] == 1'b0) begin 
+                            uart_cfg_reg[1] <= 1'b0; // RX flag temizle
                             $display("Clearing RX flag");
                         end
-                        if (pwdata[2] == 1'b0) begin
-                            uart_cfg_reg[2] <= 1'b0; // Clear TX completed flag
+                        if (s_axi_wdata[2] == 1'b0) begin
+                            uart_cfg_reg[2] <= 1'b0; // TX flag temizle
                             $display("Clearing TX flag");
                         end
                     end
-                    default: ; // Do nothing
+                    default: ; // Hiçbir şey yapma
                 endcase
             end
-            // Handle register reads
-            else if (psel && penable && !pwrite) begin
-                pready <= 1'b1;
-                $display("Reading address 0x%h, value = 0x%h", paddr, prdata);
+        end
+    end
+
+    //----------------------------------------------------------------------
+    // AXI4-Lite Arayüzü - Okuma Kanalı
+    //----------------------------------------------------------------------
+    always_ff @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
+        if (!s_axi_aresetn) begin
+            s_axi_arready <= 1'b0;
+            s_axi_rvalid  <= 1'b0;
+            s_axi_rresp   <= 2'b00;
+            axi_araddr    <= 32'd0;
+        end else begin
+            // ARREADY (okuma adresi kabulü)
+            if (!s_axi_arready && s_axi_arvalid) begin
+                s_axi_arready <= 1'b1;
+                axi_araddr    <= s_axi_araddr;
+            end else begin
+                s_axi_arready <= 1'b0;
             end
-            // Handle just psel assertion without penable
-            else if (psel && !penable) begin
-                pready <= 1'b0; // Make sure pready is deasserted during setup phase
+            
+            // RVALID (okuma verisi hazır)
+            if (s_axi_arready && s_axi_arvalid && !s_axi_rvalid) begin
+                s_axi_rvalid <= 1'b1;
+                s_axi_rresp  <= 2'b00; // OKAY
+                
+                // Register okuma
+                case (axi_araddr[7:0])
+                    UART_CPB: s_axi_rdata <= uart_cpb_reg;
+                    UART_STP: s_axi_rdata <= uart_stp_reg;
+                    UART_RDR: s_axi_rdata <= uart_rdr_reg;
+                    UART_TDR: s_axi_rdata <= uart_tdr_reg;
+                    UART_CFG: s_axi_rdata <= uart_cfg_reg;
+                    default:  s_axi_rdata <= 32'd0;
+                endcase
+                
+                $display("Reading address 0x%h, value = 0x%h", axi_araddr, s_axi_rdata);
+            end else if (s_axi_rvalid && s_axi_rready) begin
+                s_axi_rvalid <= 1'b0;
             end
         end
     end
     
-    // Read data multiplexer
-    always_comb begin
-        case (paddr[7:0])
-            UART_CPB: prdata = uart_cpb_reg;
-            UART_STP: prdata = uart_stp_reg;
-            UART_RDR: prdata = uart_rdr_reg;
-            UART_TDR: prdata = uart_tdr_reg;
-            UART_CFG: prdata = uart_cfg_reg;
-            default:  prdata = 32'd0;
-        endcase
-    end
-    
-    // Calculate stop bit cycles
+    //----------------------------------------------------------------------
+    // Stop bit hesaplama
+    //----------------------------------------------------------------------
     always_comb begin
         if (uart_stp_reg[1:0] == 2'b00)
             stop_cycles = uart_cpb_reg; // 1 stop bit
@@ -153,9 +229,11 @@ module uart (
             stop_cycles = uart_cpb_reg << 1; // 2 stop bits
     end
     
-    // UART transmitter
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+    //----------------------------------------------------------------------
+    // UART verici (transmitter)
+    //----------------------------------------------------------------------
+    always_ff @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
+        if (!s_axi_aresetn) begin
             tx_state <= IDLE;
             tx_active <= 1'b0;
             tx_done <= 1'b0;
@@ -163,7 +241,7 @@ module uart (
             tx_bit_idx <= 3'd0;
             uart_tx <= 1'b1; // Idle high
         end else begin
-            // Default assignments
+            // Varsayılan atamalar
             tx_done <= 1'b0;
             
             case (tx_state)
@@ -230,9 +308,11 @@ module uart (
         end
     end
     
-    // UART receiver
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+    //----------------------------------------------------------------------
+    // UART alıcı (receiver)
+    //----------------------------------------------------------------------
+    always_ff @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
+        if (!s_axi_aresetn) begin
             rx_state <= IDLE;
             rx_active <= 1'b0;
             rx_done <= 1'b0;
@@ -240,7 +320,7 @@ module uart (
             rx_bit_idx <= 3'd0;
             rx_data <= 8'd0;
         end else begin
-            // Default assignments
+            // Varsayılan atamalar
             rx_done <= 1'b0;
             
             case (rx_state)
