@@ -7,3 +7,9 @@ gateware/core/cv32e40p
 # core - verialtor çıktıları:
 gateware/core/build
 gateware/core/obj_dir
+
+# axi repo:
+gateware/axi4/axi
+
+# axi repo:
+gateware/pulp_common_cell/common_cells

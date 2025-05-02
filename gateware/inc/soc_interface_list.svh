@@ -23,69 +23,40 @@
 `ifndef __SOC_INTERFACE_LIST_SVH__
 `define __SOC_INTERFACE_LIST_SVH__
 
-interface CV32E_INST_INF();
+typedef struct packed {
     logic [31:0] instr_addr;
     logic instr_req;
+} CORE_INST_INF_M2S;
+
+typedef struct packed {
     logic instr_gnt;
     logic instr_rvalid;
     logic [31:0] instr_rdata;
-    
-    modport MASTER
-    (
-        output instr_addr,
-        output instr_req,
-        input instr_gnt,
-        input instr_rvalid,
-        input instr_rdata
-    );
-    
-    modport SLAVE
-    (
-        input instr_addr,
-        input instr_req,
-        output instr_gnt,
-        output instr_rvalid,
-        output instr_rdata
-    );
-    
-endinterface
+} CORE_INST_INF_S2M;
 
+typedef struct packed {
+    CORE_INST_INF_M2S m2s;
+    CORE_INST_INF_S2M s2m;
+} CORE_INST_INF;
 
-interface CV32E_DATA_INF();
+typedef struct packed {
     logic [31:0] data_addr;
     logic data_req;
-    logic data_gnt;
     logic data_we;
     logic [3:0] data_be;
     logic [31:0] data_wdata;
+} CORE_DATA_INF_M2S;
+
+typedef struct packed {
+    logic data_gnt;
     logic data_rvalid;
     logic [31:0] data_rdata;
-    
-    modport MASTER
-    (
-        output data_addr,
-        output data_req,
-        input data_gnt,
-        output data_we,
-        output data_be,
-        output data_wdata,
-        input data_rvalid,
-        input data_rdata
-    );
-    
-    modport SLAVE
-    (
-        input data_addr,
-        input data_req,
-        output data_gnt,
-        input data_we,
-        input data_be,
-        input data_wdata,
-        output data_rvalid,
-        output data_rdata
-    );
-    
-endinterface
+} CORE_DATA_INF_S2M;
+
+typedef struct packed {
+    CORE_DATA_INF_M2S m2s;
+    CORE_DATA_INF_S2M s2m;
+} CORE_DATA_INF;
 
 `endif //__SOC_INTERFACE_LIST_SVH__
 

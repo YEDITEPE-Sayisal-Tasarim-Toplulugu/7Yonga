@@ -23,6 +23,7 @@
 
 `timescale 1ns / 1ps
 
+`include "soc_configuration.svh"
 `include "soc_interface_list.svh"
 
 module inst_memory
@@ -32,12 +33,15 @@ module inst_memory
     (
         input logic clk_i,
 
-        CV32E_DATA_INF.SLAVE cv32_data_inf
+        input CORE_DATA_INF_M2S cv32_data_inf_m2s,
+        output CORE_DATA_INF_S2M cv32_data_inf_s2m
     );
 
-`ifdef USE_SOFT_MEMORY_MODULES
+import soc_config_pkg::*;
+
+if (soc_config_pkg::USE_SOFT_MEMORY_MODULES) begin : SOC_CONFG_SOFT
     memory_model_soft
-    #(parameter
+    #(
         .WORD_SIZE_BYTE(4),
         .SIZE_IN_KB(SIZE_IN_KB)
     )
@@ -45,21 +49,20 @@ module inst_memory
     (
         .clka(clk_i),
 
-        .ena(cv32_data_inf.data_req),
-        .addra(cv32_data_inf.data_addr),
+        .ena(cv32_data_inf_m2s.data_req),
+        .addra(cv32_data_inf_m2s.data_addr),
 
-        .wea({(4){cv32_data_inf.data_we}} & cv32_data_inf.data_be),
-        .dina(cv32_data_inf.data_wdata),
+        .wea({(4){cv32_data_inf_m2s.data_we}} & cv32_data_inf_m2s.data_be),
+        .dina(cv32_data_inf_m2s.data_wdata),
 
-        .douta(cv32_data_inf.data_rdata)
+        .douta(cv32_data_inf_s2m.data_rdata)
     );
 
     always_ff @(posedge clk_i) begin
-        cv32_data_inf.data_gnt <= cv32_data_inf.data_req;
-        cv32_data_inf.data_rvalid <= cv32_data_inf.data_req & ~cv32_data_inf.data_we;
+        cv32_data_inf_s2m.data_gnt <= cv32_data_inf_m2s.data_req;
+        cv32_data_inf_s2m.data_rvalid <= cv32_data_inf_m2s.data_req & ~cv32_data_inf_m2s.data_we;
     end
-
-`endif
+end
 
 endmodule
 
@@ -70,12 +73,15 @@ module data_memory
     (
         input logic clk_i,
 
-        CV32E_DATA_INF.SLAVE cv32_data_inf
+        input CORE_DATA_INF_M2S cv32_data_inf_m2s,
+        output CORE_DATA_INF_S2M cv32_data_inf_s2m
     );
 
-`ifdef USE_SOFT_MEMORY_MODULES
+import soc_config_pkg::*;
+
+if (soc_config_pkg::USE_SOFT_MEMORY_MODULES) begin : SOC_CONFG_SOFT
     memory_model_soft
-    #(parameter
+    #(
         .WORD_SIZE_BYTE(4),
         .SIZE_IN_KB(SIZE_IN_KB)
     )
@@ -83,52 +89,54 @@ module data_memory
     (
         .clka(clk_i),
 
-        .ena(cv32_data_inf.data_req),
-        .addra(cv32_data_inf.data_addr),
+        .ena(cv32_data_inf_m2s.data_req),
+        .addra(cv32_data_inf_m2s.data_addr),
 
-        .wea({(4){cv32_data_inf.data_we}} & cv32_data_inf.data_be),
-        .dina(cv32_data_inf.data_wdata),
+        .wea({(4){cv32_data_inf_m2s.data_we}} & cv32_data_inf_m2s.data_be),
+        .dina(cv32_data_inf_m2s.data_wdata),
 
-        .douta(cv32_data_inf.data_rdata)
+        .douta(cv32_data_inf_s2m.data_rdata)
     );
 
     always_ff @(posedge clk_i) begin
-        cv32_data_inf.data_gnt <= cv32_data_inf.data_req;
-        cv32_data_inf.data_rvalid <= cv32_data_inf.data_req & ~cv32_data_inf.data_we;
+        cv32_data_inf_s2m.data_gnt <= cv32_data_inf_m2s.data_req;
+        cv32_data_inf_s2m.data_rvalid <= cv32_data_inf_m2s.data_req & ~cv32_data_inf_m2s.data_we;
     end
-
-`endif
+end
 
 endmodule
 
 module inst_rom
     #(parameter 
-            SIZE_IN_KB = 8
-    )
-    (
-        input logic clk_i,
-
-        CV32E_INST_INF.SLAVE cv32_inst_inf
-    );
-
-`ifdef USE_SOFT_MEMORY_MODULES
-    memory_model_rom
-    #(parameter
-            WORD_SIZE_BITS = 32,
             SIZE_IN_BYTE = 1024
     )
     (
+        input logic clk_i,
+    
+        input CORE_INST_INF_M2S cv32_inst_inf_m2s,
+        output CORE_INST_INF_S2M cv32_inst_inf_s2m
+    );
+
+import soc_config_pkg::*;
+
+if (soc_config_pkg::USE_SOFT_ROM_MODULES) begin : SOC_CONFG_SOFT
+    memory_model_rom
+    #(
+        .WORD_SIZE_BITS(32),
+        .SIZE_IN_BYTE(SIZE_IN_BYTE)
+    )
+    SOFT_ROM
+    (
         .clk_i(clk_i),
 
-        .read_addr_i(cv32_inst_inf.instr_addr),
-        .read_data_o(cv32_inst_inf.instr_rdata),
+        .read_addr_i(cv32_inst_inf_m2s.instr_addr),
+        .read_data_o(cv32_inst_inf_s2m.instr_rdata)
     );
 
     always_ff @(posedge clk_i) begin
-        cv32_inst_inf.instr_gnt <= cv32_inst_inf.instr_req;
-        cv32_inst_inf.instr_rvalid <= cv32_inst_inf.instr_req;
+        cv32_inst_inf_s2m.instr_gnt <= cv32_inst_inf_m2s.instr_req;
+        cv32_inst_inf_s2m.instr_rvalid <= cv32_inst_inf_m2s.instr_req;
     end
-
-`endif
+end
 
 endmodule
