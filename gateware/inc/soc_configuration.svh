@@ -4,6 +4,8 @@
 `ifndef __SOC_CINFIGURATION_SVH__
 `define __SOC_CINFIGURATION_SVH__
 
+`define VERILATOR           1 
+
 package soc_config_pkg;
 
 // Parametrik sabitler
