@@ -15,15 +15,15 @@ birimleri ve veri yolları ile özgün bir mikrodenetleyici tasarlamayı hedefle
 mikrodenetleyici, yüksek doğruluk ve düşük güç tüketimi öncelikleri doğrultusunda geliştirilecektir.
 
 ## Üyeler
-* Muhammet Furkan UZUN
+* Muhammet Furkan UZUN (İletişim Sorumlusu) (@mhfuzun)
   - Öğrenim: Yeditepe Üniversitesi, Elektrik-Elektronik Mühendisliği 2. Sınıf öğrencisi.
   - İş yükü: Çekirdeğin, belleklerin, veri yollarının implementasyonu,
 donanım hızlandırıcı
-* Hasan GÜZELŞEMME
+* Hasan GÜZELŞEMME (@princeofyozgat)
   - Öğrenim: Yeditepe Üniversitesi, Bilgisayar Mühendisliği 3. Sınıf öğrencisi.
   - İş yükü: Çekirdek implementasyonu, çevre birimleri tasarımı, devre
 serimi
-* Erhan ÖNALDI
+* Erhan ÖNALDI (@ErhanOnaldi)
   - Öğrenim: Yeditepe Üniversitesi, Bilgisayar Mühendisliği 4. Sınıf öğrencisi.
   - İş yükü: Çevre Birimleri tasarımı, testler, donanım hızlandırıcı
 
