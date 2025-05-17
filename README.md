@@ -34,3 +34,49 @@ serimi
 
 ## İş Planı
 ![İş Planı](tasarımlar/görseller/isPlani.jpg)
+
+## Dizin Yapısı:
+```bash
+my-project/
+│
+├── README.md               # Projenin tanıtım dosyası
+├── LICENSE                 # Lisans bilgisi
+├── .gitignore              # Git tarafından yok sayılacak dosyalar
+├── requirements.txt        # Gerekli Python paketleri (Python için)
+├── dependences.md          # Bağımlı olunan harici repolar (Makefile dependences ile toplu olarak "clone"'lanabilir)
+│
+├── docs/                   # Belgeler
+│   └── kaynaklar/          # Referans Dokümanlar
+|
+├── tasarımlar/             # Proje tasarım klasörü, drawio tasarımlarını içerir
+│   └── görseller/          # drawio tasarımlarının .jpg/.png çıktılarını içerir
+│
+├── teknofest/              # Teknofest 2025 Klasörü, Yarışma aşamlarını ve repor (şablonlarını) içerir.
+│   └── önbaşvuru/          # Teknofest 2025 ~ Ön Başvuru Aşaması
+│   └── dtr/                # Teknofest 2025 ~ DTR Aşaması
+│   └── ötr/                # Teknofest 2025 ~ OTR Aşaması
+|
+├── LDPC/                   # LDPC çalışma klasörü
+│   └── articles/           # LDPC ile ilgli referans kaynaklar
+│   └── pdfs/               # LPDC çalışma çıktıları
+│
+├── firmware/               # Mikrodenetleyici yazılımlarını içerir
+|
+├── gateware/               # HDL kodları
+│   └── axi4/               # AXI4 Klasörü
+│     └── axi/              # Harici AXI4 reposu
+│     └── Makefile          # AXI4 reposunu klonlamak için betik
+│     └── README.md         # AXI4 reposu ile ilgili karşılaşılan hatalar
+│   └── core/               # CORE Klasörü
+│   └── inc/                # SOC için Systemverilog Header dosyaları
+│   └── peripherals/        # Mikrodenetleyici Çevre Birimleri klasörü
+│     └── uart/             # UART Çevre Birimi HDL ve test kodları
+│     └── README.MD         #
+│   └── pulp_common_cell/   # Pulp Common Cell klasörü, harici repo içerir.
+│     └── Makefile          # Pulp Common Cell reposunu klonlamak için betik
+│   └── soc/                # Mikrodenetleyici SOC yapısına ait HDL kodlarını içerir
+│     └── adapter/          # SOC içerisinde bulunan arayüzler için arayüz dönüşümlerini sağlar.
+│     └── core_interfaces/  # Çekirdeğin SOC içerisindeki sarıcı data&instruction arayüzlerini içerir
+│   └── test/               # HDL test klasörü
+│
+```
