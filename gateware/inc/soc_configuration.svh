@@ -33,6 +33,12 @@ parameter int AXI4_CONF_DATA_WIDTH          = 32'd32;
 parameter int AXI4_CONF_ID_WIDTH            = 32'd8;
 parameter int AXI4_CONF_USER_WIDTH          = 32'd8;
 
+// AXI4-Lite
+parameter int AXI4L_CONF_ADDR_WIDTH          = 32'd32;
+parameter int AXI4L_CONF_DATA_WIDTH          = 32'd32;
+parameter int AXI4L_CONF_ID_WIDTH            = 32'd8;
+parameter int AXI4L_CONF_USER_WIDTH          = 32'd8;
+
 endpackage
 
 `endif // __SOC_CINFIGURATION_SVH__

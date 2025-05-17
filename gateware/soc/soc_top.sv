@@ -49,29 +49,40 @@ module soc_top
     CORE_INST_INF CORE_instr_intf;
     CORE_DATA_INF CORE_data_intf;
     
-    AXI_BUS AXI4_Slaves[SYSTEM_BUS_SLAVE_COUNT]();
-    AXI_BUS AXI4_Masters[SYSTEM_BUS_MASTER_COUNT]();
+    AXI_BUS #(
+        .AXI_ADDR_WIDTH (   soc_config_pkg::AXI4_CONF_ADDR_WIDTH    ),
+        .AXI_DATA_WIDTH (   soc_config_pkg::AXI4_CONF_DATA_WIDTH    ),
+        .AXI_ID_WIDTH   (   soc_config_pkg::AXI4_CONF_ID_WIDTH      ),
+        .AXI_USER_WIDTH (   soc_config_pkg::AXI4_CONF_USER_WIDTH    )
+    ) AXI4_Slaves[SYSTEM_BUS_SLAVE_COUNT]();
+    
+    AXI_BUS #(
+        .AXI_ADDR_WIDTH (   soc_config_pkg::AXI4_CONF_ADDR_WIDTH    ),
+        .AXI_DATA_WIDTH (   soc_config_pkg::AXI4_CONF_DATA_WIDTH    ),
+        .AXI_ID_WIDTH   (   soc_config_pkg::AXI4_CONF_ID_WIDTH      ),
+        .AXI_USER_WIDTH (   soc_config_pkg::AXI4_CONF_USER_WIDTH    )
+    ) AXI4_Masters[SYSTEM_BUS_MASTER_COUNT]();
     
     localparam axi_pkg::xbar_rule_32_t AXI4_AddrMap[SYSTEM_BUS_SLAVE_COUNT] = '{
-        // INST_SRAM_ADDR_RULE
-        axi_pkg::xbar_rule_32_t'{
-            idx:            AXI4_SLAVE_INST_SRAM_ID,
-            start_addr:     soc_addr_rules_pkg::INST_SRAM_ADDR_RULE.start_addr,
-            end_addr:       soc_addr_rules_pkg::INST_SRAM_ADDR_RULE.end_addr,
+        // PERIPHERALS_TOP_ADDR_RULE
+        '{
+            idx:            AXI4_SLAVE_PERIPHERALS_ID,
+            start_addr:     soc_addr_rules_pkg::PERIPHERALS_TOP_ADDR_RULE.start_addr,
+            end_addr:       soc_addr_rules_pkg::PERIPHERALS_TOP_ADDR_RULE.end_addr,
             default:        '0
         },
         // DATA_SRAM_ADDR_RULE
-        axi_pkg::xbar_rule_32_t'{
+        '{
             idx:            AXI4_SLAVE_DATA_SRAM_ID,
             start_addr:     soc_addr_rules_pkg::DATA_SRAM_ADDR_RULE.start_addr,
             end_addr:       soc_addr_rules_pkg::DATA_SRAM_ADDR_RULE.end_addr,
             default:        '0
         },
-        // PERIPHERALS_TOP_ADDR_RULE
-        axi_pkg::xbar_rule_32_t'{
-            idx:            AXI4_SLAVE_PERIPHERALS_ID,
-            start_addr:     soc_addr_rules_pkg::PERIPHERALS_TOP_ADDR_RULE.start_addr,
-            end_addr:       soc_addr_rules_pkg::PERIPHERALS_TOP_ADDR_RULE.end_addr,
+        // INST_SRAM_ADDR_RULE
+        '{
+            idx:            AXI4_SLAVE_INST_SRAM_ID,
+            start_addr:     soc_addr_rules_pkg::INST_SRAM_ADDR_RULE.start_addr,
+            end_addr:       soc_addr_rules_pkg::INST_SRAM_ADDR_RULE.end_addr,
             default:        '0
         }
     };
@@ -194,7 +205,7 @@ module soc_top
     
     
     /// Configuration for `axi_xbar`.
-    localparam axi_pkg::xbar_cfg_t SOC_xbar_cfg = '{
+    localparam axi_pkg::xbar_cfg_t SOC_SystemBus_xbar_cfg = '{
         /// Number of slave ports of the crossbar.
         /// This many master modules are connected to it.
         // int unsigned   NoSlvPorts;
@@ -206,11 +217,11 @@ module soc_top
         /// Maximum number of open transactions each master connected to the crossbar can have in
         /// flight at the same time.
         // int unsigned   MaxMstTrans;
-        MaxMstTrans:        1,
+        MaxMstTrans:        SYSTEM_BUS_MASTER_COUNT,
         /// Maximum number of open transactions each slave connected to the crossbar can have in
         /// flight at the same time.
         // int unsigned   MaxSlvTrans;
-        MaxSlvTrans:        1,
+        MaxSlvTrans:        SYSTEM_BUS_SLAVE_COUNT,
         /// Determine if the internal FIFOs of the crossbar are instantiated in fallthrough mode.
         /// 0: No fallthrough
         /// 1: Fallthrough
@@ -252,7 +263,7 @@ module soc_top
     axi_xbar_intf
     #(
         .AXI_USER_WIDTH     (soc_config_pkg::AXI4_CONF_USER_WIDTH   ),
-        .Cfg                (SOC_xbar_cfg                           )
+        .Cfg                (SOC_SystemBus_xbar_cfg                 )
     ) SYSTEM_BUS (
         .clk_i                  (clk_i),
         .rst_ni                 (~reset_i),
