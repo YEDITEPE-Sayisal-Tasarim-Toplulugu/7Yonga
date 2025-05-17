@@ -29,14 +29,17 @@ import axi_pkg::*;
 
 module soc_peripherals_top
     #(
-        parameter int unsigned AXI_ADDR_WIDTH     = 32'd0,
-        parameter int unsigned AXI_DATA_WIDTH     = 32'd0,
-        parameter int unsigned AXI_ID_WIDTH       = 32'd0,
-        parameter int unsigned AXI_USER_WIDTH     = 32'd0,
+        parameter int unsigned AXI_ADDR_WIDTH     = 32'd32,
+        parameter int unsigned AXI_DATA_WIDTH     = 32'd32,
+        parameter int unsigned AXI_ID_WIDTH       = 32'd8,
+        parameter int unsigned AXI_USER_WIDTH     = 32'd8,
         parameter int unsigned AXI_STRB_WIDTH     = (AXI_DATA_WIDTH/8)
     )
     (
         input logic clk_i, reset_i,
+        
+        input logic UART0_rx_i,
+        output logic UART0_tx_o,
         
         AXI_BUS.Slave              AXI4_slave
     );
@@ -55,29 +58,79 @@ module soc_peripherals_top
         // AXIL_UART_ADDR_RULE
         '{
             idx:        AXI4L_SLAVE_UART_ID,
-            start_addr: AXIL_UART_ADDR_RULE.start_addr,
-            end_addr:   AXIL_UART_ADDR_RULE.end_addr
+            start_addr: soc_addr_rules_pkg::AXIL_UART_ADDR_RULE.start_addr,
+            end_addr:   soc_addr_rules_pkg::AXIL_UART_ADDR_RULE.end_addr
         }
     };
+    
+    AXI_LITE#(
+        .AXI_ADDR_WIDTH (   AXI_ADDR_WIDTH    ),
+        .AXI_DATA_WIDTH (   AXI_DATA_WIDTH    )
+    ) AXI4L_Slaves[PERIPHERAL_BUS_MASTER_COUNT]();
+    
+    AXI_LITE#(
+        .AXI_ADDR_WIDTH (   AXI_ADDR_WIDTH    ),
+        .AXI_DATA_WIDTH (   AXI_DATA_WIDTH    )
+    ) AXI4L_Masters[PERIPHERAL_BUS_SLAVE_COUNT]();
+    
+    uart
+    PERIPHERAL_UART 
+    (
+        // Clock and reset signals
+        .s_axi_aclk(clk_i),
+        .s_axi_aresetn(~reset_i),
+        
+        // AXI4-Lite Slave Arayüzü
+        // Write Address Channel
+        .s_axi_awaddr   (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].aw_addr  ),
+        .s_axi_awvalid  (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].aw_valid ),
+        .s_axi_awready  (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].aw_ready ),
+        
+        // Write Data Channel
+        .s_axi_wdata    (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].w_data   ),
+        .s_axi_wstrb    (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].w_strb   ),
+        .s_axi_wvalid   (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].w_valid  ),
+        .s_axi_wready   (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].w_ready  ),
+        
+        // Write Response Channel
+        .s_axi_bresp    (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].b_resp   ),
+        .s_axi_bvalid   (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].b_valid  ),
+        .s_axi_bready   (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].b_ready  ),
+        
+        // Read Address Channel
+        .s_axi_araddr   (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].ar_addr  ),
+        .s_axi_arvalid  (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].ar_valid ),
+        .s_axi_arready  (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].ar_ready ),
+        
+        // Read Data Channel
+        .s_axi_rdata    (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].r_data   ),
+        .s_axi_rresp    (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].r_resp   ),
+        .s_axi_rvalid   (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].r_valid  ),
+        .s_axi_rready   (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].r_ready  ),
+        
+        // UART pins
+        .uart_rx        (UART0_rx_i),
+        .uart_tx        (UART0_tx_o)
+    );
     
     /// Configuration for `axi_xbar`.
     localparam axi_pkg::xbar_cfg_t SOC_PeripheralBus_xbar_cfg = '{
         /// Number of slave ports of the crossbar.
         /// This many master modules are connected to it.
         // int unsigned   NoSlvPorts;
-        NoSlvPorts:         PERIPHERAL_BUS_SLAVE_COUNT,
+        NoSlvPorts:         PERIPHERAL_BUS_MASTER_COUNT,
         /// Number of master ports of the crossbar.
         /// This many slave modules are connected to it.
         // int unsigned   NoMstPorts;
-        NoMstPorts:         PERIPHERAL_BUS_MASTER_COUNT,
+        NoMstPorts:         PERIPHERAL_BUS_SLAVE_COUNT,
         /// Maximum number of open transactions each master connected to the crossbar can have in
         /// flight at the same time.
         // int unsigned   MaxMstTrans;
-        MaxMstTrans:        1,
+        MaxMstTrans:        PERIPHERAL_BUS_SLAVE_COUNT,
         /// Maximum number of open transactions each slave connected to the crossbar can have in
         /// flight at the same time.
         // int unsigned   MaxSlvTrans;
-        MaxSlvTrans:        PERIPHERAL_BUS_SLAVE_COUNT,
+        MaxSlvTrans:        PERIPHERAL_BUS_MASTER_COUNT,
         /// Determine if the internal FIFOs of the crossbar are instantiated in fallthrough mode.
         /// 0: No fallthrough
         /// 1: Fallthrough
@@ -101,16 +154,6 @@ module soc_peripherals_top
         NoAddrRules:        PERIPHERAL_BUS_SLAVE_COUNT,
         default:            '0
     };
-    
-    AXI_LITE#(
-        .AXI_ADDR_WIDTH (   AXI_ADDR_WIDTH    ),
-        .AXI_DATA_WIDTH (   AXI_DATA_WIDTH    )
-    ) AXI4L_Slaves[PERIPHERAL_BUS_MASTER_COUNT]();
-    
-    AXI_LITE#(
-        .AXI_ADDR_WIDTH (   AXI_ADDR_WIDTH    ),
-        .AXI_DATA_WIDTH (   AXI_DATA_WIDTH    )
-    ) AXI4L_Masters[PERIPHERAL_BUS_SLAVE_COUNT]();
     
     axi_to_axi_lite_intf #(
         /// AXI bus parameters
@@ -138,10 +181,10 @@ module soc_peripherals_top
     ) PERIPHERAL_BUS (
         .clk_i          (clk_i),
         .rst_ni         (~reset_i),
-        .testmode_i     (1'b0),
+        .test_i         (1'b0),
         
-        .slv_ports(AXI4L_Slaves),
-        .mst_ports(AXI4L_Masters),
+        .slv_ports(AXI4L_Masters),
+        .mst_ports(AXI4L_Slaves),
         
         .addr_map_i(AXI4L_AddrMap),
         

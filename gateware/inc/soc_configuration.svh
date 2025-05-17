@@ -13,7 +13,7 @@ parameter int USE_SOFT_MEMORY_MODULES = 1;
 parameter int USE_SOFT_ROM_MODULES = 1;
 
 // CORE
-parameter int CORE_BOOT_ADDR                = soc_addr_rules_pkg::ROM_ADDR_RULE;
+parameter int CORE_BOOT_ADDR                = 32'h3000_0000;
 parameter int CORE_MTVEC_ADDR               = CORE_BOOT_ADDR;
 parameter int CORE_DM_HALT_ADDR             = CORE_BOOT_ADDR;
 parameter int CORE_HART_ID                  = 32'd0;
