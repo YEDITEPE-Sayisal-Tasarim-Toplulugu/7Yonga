@@ -209,19 +209,19 @@ module soc_top
         /// Number of slave ports of the crossbar.
         /// This many master modules are connected to it.
         // int unsigned   NoSlvPorts;
-        NoSlvPorts:         SYSTEM_BUS_SLAVE_COUNT,
+        NoSlvPorts:         SYSTEM_BUS_MASTER_COUNT,
         /// Number of master ports of the crossbar.
         /// This many slave modules are connected to it.
         // int unsigned   NoMstPorts;
-        NoMstPorts:         SYSTEM_BUS_MASTER_COUNT,
+        NoMstPorts:         SYSTEM_BUS_SLAVE_COUNT,
         /// Maximum number of open transactions each master connected to the crossbar can have in
         /// flight at the same time.
         // int unsigned   MaxMstTrans;
-        MaxMstTrans:        SYSTEM_BUS_MASTER_COUNT,
+        MaxMstTrans:        SYSTEM_BUS_SLAVE_COUNT,
         /// Maximum number of open transactions each slave connected to the crossbar can have in
         /// flight at the same time.
         // int unsigned   MaxSlvTrans;
-        MaxSlvTrans:        SYSTEM_BUS_SLAVE_COUNT,
+        MaxSlvTrans:        SYSTEM_BUS_MASTER_COUNT,
         /// Determine if the internal FIFOs of the crossbar are instantiated in fallthrough mode.
         /// 0: No fallthrough
         /// 1: Fallthrough
@@ -269,8 +269,8 @@ module soc_top
         .rst_ni                 (~reset_i),
         .test_i                 (1'b0),
         
-        .slv_ports              (AXI4_Slaves),
-        .mst_ports              (AXI4_Masters),
+        .slv_ports              (AXI4_Masters),
+        .mst_ports              (AXI4_Slaves),
         
         .addr_map_i             (AXI4_AddrMap),
         
