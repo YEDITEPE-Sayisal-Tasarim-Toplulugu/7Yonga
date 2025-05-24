@@ -177,7 +177,8 @@ module soc_peripherals_top
     );
     
     axi_lite_xbar_intf #(
-        .Cfg(SOC_PeripheralBus_xbar_cfg)
+        .Cfg            ( SOC_PeripheralBus_xbar_cfg    ),
+        .rule_t         ( axi_pkg::xbar_rule_32_t       )
     ) PERIPHERAL_BUS (
         .clk_i          (clk_i),
         .rst_ni         (~reset_i),
