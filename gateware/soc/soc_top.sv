@@ -263,7 +263,8 @@ module soc_top
     axi_xbar_intf
     #(
         .AXI_USER_WIDTH     (soc_config_pkg::AXI4_CONF_USER_WIDTH   ),
-        .Cfg                (SOC_SystemBus_xbar_cfg                 )
+        .Cfg                (SOC_SystemBus_xbar_cfg                 ),
+        .rule_t             (axi_pkg::xbar_rule_32_t                )
     ) SYSTEM_BUS (
         .clk_i                  (clk_i),
         .rst_ni                 (~reset_i),

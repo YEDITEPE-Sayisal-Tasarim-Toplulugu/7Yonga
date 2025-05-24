@@ -35,9 +35,9 @@ module core_instruction_top
       /// Data width in bit of the memory request data **and** the Axi4-Lite data channels.
       parameter int unsigned    AxiDataWidth       = 32'd32,
       /// AXI4+ATOP ID width.
-      parameter int unsigned AxiID_WIDTH       = 32'd0,
+      parameter int unsigned AxiID_WIDTH       = 32'd8,
       /// AXI4+ATOP user width.
-      parameter int unsigned AxiUSER_WIDTH     = 32'd0
+      parameter int unsigned AxiUSER_WIDTH     = 32'd8
     )
     (
         input logic clk_i, reset_i,
@@ -159,6 +159,7 @@ module core_instruction_top
         .cv32_data_inf_i(SRAM_data_inf_w)
     );
     
+    /*
     axi_to_mem_intf #(
       /// See `axi_to_mem`, parameter `AddrWidth`.
       .ADDR_WIDTH     ( AxiAddrWidth),
@@ -205,6 +206,113 @@ module core_instruction_top
       .mem_rvalid_i(AXI4_ADAP_inf_w.data_rvalid),
       /// See `axi_to_mem`, port `mem_rdata_i`.
       .mem_rdata_i(AXI4_ADAP_inf_w.data_rdata)
+    );
+    */
+    
+    typedef logic [AxiID_WIDTH-1:0]     id_t;
+    typedef logic [AxiDataWidth-1:0]   data_t;
+    typedef logic [AxiDataWidth/8-1:0] strb_t;
+    typedef logic [AxiUSER_WIDTH-1:0]   user_t;
+    
+    `AXI_TYPEDEF_AW_CHAN_T(aw_chan_t, addr_t, id_t, user_t)
+    `AXI_TYPEDEF_W_CHAN_T(w_chan_t, data_t, strb_t, user_t)
+    `AXI_TYPEDEF_B_CHAN_T(b_chan_t, id_t, user_t)
+    `AXI_TYPEDEF_AR_CHAN_T(ar_chan_t, addr_t, id_t, user_t)
+    `AXI_TYPEDEF_R_CHAN_T(r_chan_t, data_t, id_t, user_t)
+    `AXI_TYPEDEF_REQ_T(req_t, aw_chan_t, w_chan_t, ar_chan_t)
+    `AXI_TYPEDEF_RESP_T(resp_t, b_chan_t, r_chan_t)
+    
+    typedef struct packed {
+        logic     aw_ready;
+        logic     ar_ready;
+        logic     w_ready;
+        logic     b_valid;
+        // b_chan_t  b;
+        
+        logic [AxiID_WIDTH-1:0]            b_id;
+        logic [1:0] b_resp;
+        logic [AxiUSER_WIDTH-1:0]          b_user;
+        
+        logic     r_valid;
+        
+        // r_chan_t  r;
+        logic [AxiID_WIDTH-1:0]            r_id;
+        logic [AxiDataWidth-1:0]         r_data;
+        logic [1:0] r_resp;
+        logic           r_last;
+        logic [AxiUSER_WIDTH-1:0]          r_user;
+    } resp2_t;
+    
+    req_t   req;
+    resp_t  resp;
+    resp2_t  resp2;
+    
+    `AXI_ASSIGN_TO_REQ(req, slv)
+    `AXI_ASSIGN_FROM_RESP(slv, resp)
+    
+    assign     resp2.aw_ready    = resp.aw_ready;
+    assign     resp2.ar_ready    = resp.ar_ready;
+    assign     resp2.w_ready     = resp.w_ready;
+    assign     resp2.b_valid     = resp.b_valid;
+    // b_chan_t  b;
+    
+    assign     resp2.b_id        = resp.b_id  ;
+    assign     resp2.b_resp      = resp.b_resp;
+    assign     resp2.b_user      = resp.b_user;
+    
+    assign     resp2.r_valid     = resp.r_valid;
+    
+    // r_chan_t  r;
+    assign     resp2.r_id        = resp.r_id  ;
+    assign     resp2.r_data      = resp.r_data;
+    assign     resp2.r_resp      = resp.r_resp;
+    assign     resp2.r_last      = resp.r_last;
+    assign     resp2.r_user      = resp.r_user;
+    
+    axi_to_detailed_mem #(
+        .axi_req_t    ( req_t    ),
+        .axi_resp_t   ( resp2_t   ),
+        .AddrWidth    ( AxiAddrWidth    ),
+        .DataWidth    ( AxiDataWidth    ),
+        .IdWidth      ( AxiID_WIDTH      ),
+        .UserWidth    ( AxiUSER_WIDTH    ),
+        .NumBanks     ( 32'd1     ),
+        .BufDepth     ( 32'd1     ),
+        .HideStrb     (  1'd0     ),
+        .OutFifoDepth ( 32'd1 )
+    ) i_axi_to_detailed_mem (
+        .clk_i(clk_i),
+        .rst_ni(~reset_i),
+        .busy_o(),
+        .axi_req_i    ( req     ),
+        .axi_resp_o   ( resp2    ),
+        .mem_lock_o   (),
+        .mem_id_o     (),
+        .mem_user_o   (),
+        .mem_cache_o  (),
+        .mem_prot_o   (),
+        .mem_qos_o    (),
+        .mem_region_o (),
+        .mem_err_i    ('0),
+        .mem_exokay_i ('0),
+        
+        .mem_req_o(AXI4_ADAP_inf_w.data_req),
+        /// See `axi_to_mem`, port `mem_gnt_i`.
+        .mem_gnt_i(AXI4_ADAP_inf_w.data_gnt),
+        /// See `axi_to_mem`, port `mem_addr_o`.
+        .mem_addr_o(AXI4_ADAP_inf_w.data_addr),
+        /// See `axi_to_mem`, port `mem_wdata_o`.
+        .mem_wdata_o(AXI4_ADAP_inf_w.data_wdata),
+        /// See `axi_to_mem`, port `mem_strb_o`.
+        .mem_strb_o(AXI4_ADAP_inf_w.data_be),
+        /// See `axi_to_mem`, port `mem_atop_o`.
+        .mem_atop_o(),
+        /// See `axi_to_mem`, port `mem_we_o`.
+        .mem_we_o(AXI4_ADAP_inf_w.data_we),
+        /// See `axi_to_mem`, port `mem_rvalid_i`.
+        .mem_rvalid_i(AXI4_ADAP_inf_w.data_rvalid),
+        /// See `axi_to_mem`, port `mem_rdata_i`.
+        .mem_rdata_i(AXI4_ADAP_inf_w.data_rdata)
     );
     
     // Interface Decoder Part
