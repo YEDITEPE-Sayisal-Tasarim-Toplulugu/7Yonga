@@ -151,7 +151,7 @@ module core_data_top
         /// Data width in bit of the memory request data **and** the Axi4-Lite data channels.
         .DataWidth       ( AxiDataWidth),
         /// How many requests can be in flight at the same time. (Depth of the response mux FIFO).
-        .MaxRequests     ( 32'd0),
+        .MaxRequests     ( 32'd1),
         
         /// AXI4 request struct definition.
         .axi_req_t       ( axi_mst_req_t),
@@ -190,15 +190,16 @@ module core_data_top
         /// Memory request encountered an error. This is forwarded from the AXI4-Lite error response.
         .mem_rsp_error_o(),
         /// AXI4 master port, slave aw cache signal
-        .slv_aw_cache_i(),
+        .slv_aw_cache_i('0),
         /// AXI4 master port, slave ar cache signal
-        .slv_ar_cache_i(),
+        .slv_ar_cache_i('0),
         /// AXI4 master port, request output.
         .axi_req_o(axi_mst_req),
         /// AXI4 master port, response input.
         .axi_rsp_i(axi_mst_resp)
     );
     
+    /*
     axi_to_mem_intf #(
       /// See `axi_to_mem`, parameter `AddrWidth`.
       .ADDR_WIDTH     ( AxiAddrWidth),
@@ -245,6 +246,72 @@ module core_data_top
       .mem_rvalid_i(AXI4_ADAP_inf_w.data_rvalid),
       /// See `axi_to_mem`, port `mem_rdata_i`.
       .mem_rdata_i(AXI4_ADAP_inf_w.data_rdata)
+    );
+    */
+    
+    typedef logic [AxiID_WIDTH-1:0]     id_t;
+    typedef logic [AxiDataWidth-1:0]   data_t;
+    typedef logic [AxiDataWidth/8-1:0] strb_t;
+    typedef logic [AxiUSER_WIDTH-1:0]   user_t;
+    
+    `AXI_TYPEDEF_AW_CHAN_T(aw_chan_t, addr_t, id_t, user_t)
+    `AXI_TYPEDEF_W_CHAN_T(w_chan_t, data_t, strb_t, user_t)
+    `AXI_TYPEDEF_B_CHAN_T(b_chan_t, id_t, user_t)
+    `AXI_TYPEDEF_AR_CHAN_T(ar_chan_t, addr_t, id_t, user_t)
+    `AXI_TYPEDEF_R_CHAN_T(r_chan_t, data_t, id_t, user_t)
+    `AXI_TYPEDEF_REQ_T(req_t, aw_chan_t, w_chan_t, ar_chan_t)
+    `AXI_TYPEDEF_RESP_T(resp_t, b_chan_t, r_chan_t)
+    
+    req_t   req;
+    resp_t  resp;
+    
+    `AXI_ASSIGN_TO_REQ(req, axi_slv)
+    `AXI_ASSIGN_FROM_RESP(axi_slv, resp)
+
+    axi_to_detailed_mem #(
+        .axi_req_t    ( req_t    ),
+        .axi_resp_t   ( resp_t   ),
+        .AddrWidth    ( AxiAddrWidth    ),
+        .DataWidth    ( AxiDataWidth    ),
+        .IdWidth      ( AxiID_WIDTH      ),
+        .UserWidth    ( AxiUSER_WIDTH    ),
+        .NumBanks     ( 32'd1     ),
+        .BufDepth     ( 32'd1     ),
+        .HideStrb     (  1'd0     ),
+        .OutFifoDepth ( 32'd1     )
+    ) i_axi_to_detailed_mem (
+        .clk_i(clk_i),
+        .rst_ni(~reset_i),
+        .busy_o(),
+        .axi_req_i    ( req     ),
+        .axi_resp_o   ( resp    ),
+        .mem_lock_o   (),
+        .mem_id_o     (),
+        .mem_user_o   (),
+        .mem_cache_o  (),
+        .mem_prot_o   (),
+        .mem_qos_o    (),
+        .mem_region_o (),
+        .mem_err_i    ('0),
+        .mem_exokay_i ('0),
+        
+        .mem_req_o(AXI4_ADAP_inf_w.data_req),
+        /// See `axi_to_mem`, port `mem_gnt_i`.
+        .mem_gnt_i(AXI4_ADAP_inf_w.data_gnt),
+        /// See `axi_to_mem`, port `mem_addr_o`.
+        .mem_addr_o(AXI4_ADAP_inf_w.data_addr),
+        /// See `axi_to_mem`, port `mem_wdata_o`.
+        .mem_wdata_o(AXI4_ADAP_inf_w.data_wdata),
+        /// See `axi_to_mem`, port `mem_strb_o`.
+        .mem_strb_o(AXI4_ADAP_inf_w.data_be),
+        /// See `axi_to_mem`, port `mem_atop_o`.
+        .mem_atop_o(),
+        /// See `axi_to_mem`, port `mem_we_o`.
+        .mem_we_o(AXI4_ADAP_inf_w.data_we),
+        /// See `axi_to_mem`, port `mem_rvalid_i`.
+        .mem_rvalid_i(AXI4_ADAP_inf_w.data_rvalid),
+        /// See `axi_to_mem`, port `mem_rdata_i`.
+        .mem_rdata_i(AXI4_ADAP_inf_w.data_rdata)
     );
     
     interface_arbiter

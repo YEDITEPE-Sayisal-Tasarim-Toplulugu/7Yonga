@@ -47,7 +47,6 @@ module tb_soc_axi_to_mem();
     ) AXI4_slave();
 
     CORE_DATA_INF AXI4_ADAP_inf_w();
-    
     /*
     axi_to_mem_intf #(
       /// See `axi_to_mem`, parameter `AddrWidth`.
@@ -97,7 +96,7 @@ module tb_soc_axi_to_mem();
       .mem_rdata_i(AXI4_ADAP_inf_w.data_rdata)
     );
     */
-    
+
     typedef logic [AXI_ID_WIDTH-1:0]     id_t;
     typedef logic [AXI_DATA_WIDTH-1:0]   data_t;
     typedef logic [AXI_DATA_WIDTH/8-1:0] strb_t;
@@ -115,7 +114,6 @@ module tb_soc_axi_to_mem();
     
     `AXI_ASSIGN_TO_REQ(req, AXI4_slave)
     `AXI_ASSIGN_FROM_RESP(AXI4_slave, resp)
-    
     /*
     axi_to_mem #(
         /// See `axi_to_mem`, parameter `AddrWidth`.
@@ -161,7 +159,6 @@ module tb_soc_axi_to_mem();
         .mem_rdata_i(AXI4_ADAP_inf_w.data_rdata)
     );
     */
-    
     axi_to_detailed_mem #(
         .axi_req_t    ( req_t    ),
         .axi_resp_t   ( resp_t   ),
@@ -295,8 +292,8 @@ module tb_soc_axi_to_mem();
             AXI4_slave.w_valid <= 0;
     
             // Write Response Channel
-            AXI4_slave.b_ready <= 1;
             wait (AXI4_slave.b_valid);
+            AXI4_slave.b_ready <= 1;
             @(posedge clk);
             AXI4_slave.b_ready <= 0;
         end
