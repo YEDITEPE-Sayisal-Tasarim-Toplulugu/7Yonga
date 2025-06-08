@@ -1,7 +1,5 @@
 `timescale 1ns / 1ps
 
-
-
 module qspi_master #(
     parameter AXI_ADDR_WIDTH = 32,
     parameter AXI_DATA_WIDTH = 32
@@ -336,7 +334,7 @@ module qspi_master #(
             end
             
             TRANSFER_DATA: begin
-                if (sclk_negedge && data_cnt == qspi_ccr.data_length) begin
+                if (sclk_negedge && data_cnt > qspi_ccr.data_length) begin
                     next_state = WAIT_COMPLETE;
                 end
             end
@@ -382,6 +380,8 @@ module qspi_master #(
                     data_cnt <= 9'd0;
                     addr_byte_cnt <= 3'd0;
                     busy <= 1'b0;
+                    shift_reg_tx <= 8'h00;
+                    shift_reg_rx <= 8'h00;
                     
                     if (start_transaction) begin
                         qspi_cs_no <= 1'b0;
@@ -403,9 +403,15 @@ module qspi_master #(
                             bit_cnt <= 3'd0;
                             if (|qspi_adr) begin
                                 shift_reg_tx <= qspi_adr[23:16];
-                            end else if (qspi_ccr.dummy_cycles == 5'd0 && qspi_ccr.data_mode != 2'b00 && qspi_ccr.read_write) begin
+                            end else if (qspi_ccr.dummy_cycles == 5'd0 && qspi_ccr.data_mode != 2'b00) begin
                                 // Prepare first data byte if going directly to TRANSFER_DATA
-                                shift_reg_tx <= qspi_dr[0][7:0];
+                                if (qspi_ccr.read_write) begin
+                                    // Write: load first byte
+                                    shift_reg_tx <= qspi_dr[0][7:0];
+                                end else begin
+                                    // Read: clear shift register
+                                    shift_reg_rx <= 8'h00;
+                                end
                             end
                         end
                     end
@@ -428,9 +434,15 @@ module qspi_master #(
                                 3'd0: shift_reg_tx <= qspi_adr[15:8];
                                 3'd1: shift_reg_tx <= qspi_adr[7:0];
                                 3'd2: begin
-                                    // Prepare first data byte if going to TRANSFER_DATA
-                                    if (qspi_ccr.dummy_cycles == 5'd0 && qspi_ccr.data_mode != 2'b00 && qspi_ccr.read_write) begin
-                                        shift_reg_tx <= qspi_dr[0][7:0];
+                                    // Prepare for next state
+                                    if (qspi_ccr.dummy_cycles == 5'd0 && qspi_ccr.data_mode != 2'b00) begin
+                                        if (qspi_ccr.read_write) begin
+                                            // Write: load first byte
+                                            shift_reg_tx <= qspi_dr[0][7:0];
+                                        end else begin
+                                            // Read: clear shift register
+                                            shift_reg_rx <= 8'h00;
+                                        end
                                     end else begin
                                         shift_reg_tx <= 8'h00;
                                     end
@@ -453,19 +465,20 @@ module qspi_master #(
                     if (sclk_negedge) begin
                         dummy_cnt <= dummy_cnt + 1'b1;
                         
-                        // Prepare first byte for write operation if next state is TRANSFER_DATA
-                        if (dummy_cnt == qspi_ccr.dummy_cycles - 1'b1 && qspi_ccr.data_mode != 2'b00 && qspi_ccr.read_write) begin
-                            shift_reg_tx <= qspi_dr[0][7:0];
+                        // Prepare for next state if this is the last dummy cycle
+                        if (dummy_cnt == qspi_ccr.dummy_cycles - 1'b1 && qspi_ccr.data_mode != 2'b00) begin
+                            if (qspi_ccr.read_write) begin
+                                // Write: load first byte
+                                shift_reg_tx <= qspi_dr[0][7:0];
+                            end else begin
+                                // Read: clear shift register
+                                shift_reg_rx <= 8'h00;
+                            end
                         end
                     end
                 end
                 
                 TRANSFER_DATA: begin
-                    // Initialize shift register for new byte during read
-                    if (!qspi_ccr.read_write && bit_cnt == 3'd0) begin
-                        shift_reg_rx <= 8'h00;
-                    end
-                    
                     // Configure data pins based on read/write and data mode
                     if (qspi_ccr.read_write) begin
                         // Write operation
@@ -483,8 +496,8 @@ module qspi_master #(
                     // Data transfer logic
                     if (qspi_ccr.read_write) begin
                         // Write operation
-                        if (bit_cnt == 3'd0 && byte_cnt > 0) begin
-                            // Load new byte from data registers (skip first load as it's already done)
+                        // Load byte at the beginning of each byte transfer
+                        if (bit_cnt == 3'd0 && data_cnt <= qspi_ccr.data_length) begin
                             // Simplified byte selection for better synthesis
                             case (byte_cnt)
                                 8'd0:  shift_reg_tx <= qspi_dr[0][7:0];
@@ -540,15 +553,16 @@ module qspi_master #(
                                     shift_reg_tx <= {shift_reg_tx[3:0], 4'h0};
                                     bit_cnt <= bit_cnt + 3'd4;
                                 end
+                                default: ; // Invalid data mode
                             endcase
                             
                             if ((qspi_ccr.data_mode == 2'b01 && bit_cnt == 3'd7) ||
                                 (qspi_ccr.data_mode == 2'b10 && bit_cnt >= 3'd6) ||
                                 (qspi_ccr.data_mode == 2'b11 && bit_cnt >= 3'd4)) begin
                                 bit_cnt <= 3'd0;
-                                data_cnt <= data_cnt + 1'b1;
-                                if (data_cnt < qspi_ccr.data_length) begin
+                                if (data_cnt <= qspi_ccr.data_length) begin
                                     byte_cnt <= byte_cnt + 1'b1;
+                                    data_cnt <= data_cnt + 1'b1;
                                 end
                             end
                         end
@@ -560,13 +574,9 @@ module qspi_master #(
                                     shift_reg_rx <= {shift_reg_rx[6:0], qspi_data_i[1]};
                                     bit_cnt <= bit_cnt + 1'b1;
                                     
-                                    // Store byte when complete
+                                    // Store byte when complete (after 8 bits received)
                                     if (bit_cnt == 3'd7) begin
                                         bit_cnt <= 3'd0;
-                                        
-                                        // Debug: Print received byte
-                                        //$display("QSPI Read x1: byte_cnt=%0d, shift_reg_rx=0x%02x, last_bit=%b, complete_byte=0x%02x", 
-                                        //         byte_cnt, shift_reg_rx[6:0], qspi_data_i[1], {shift_reg_rx[6:0], qspi_data_i[1]});
                                         
                                         // Store the complete byte with the last bit
                                         case (byte_cnt)
@@ -722,7 +732,14 @@ module qspi_master #(
                         busy <= 1'b0;
                     end
                 end
-            endcase
+                
+                default: begin
+                    // Default case - should not happen
+                    qspi_cs_no <= 1'b1;
+                    qspi_data_oen <= 4'hF;
+                    busy <= 1'b0;
+                end
+            endcase // current_state
         end
     end
 

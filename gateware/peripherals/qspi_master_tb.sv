@@ -200,11 +200,13 @@ module qspi_master_tb;
                             flash_bit_cnt <= flash_bit_cnt + 1'b1;
                             if (flash_bit_cnt == 3'd7) begin
                                 flash_bit_cnt <= 3'd0;
-                                if (flash_byte_cnt < 10'd8) begin  // Read up to 8 bytes
+                                
+                                // For status register, keep returning the same value
+                                if (flash_cmd == CMD_RDSR1) begin
+                                    // Status register doesn't increment
+                                end else if (flash_byte_cnt < 10'd255) begin  // Limit to prevent overflow
                                     flash_byte_cnt <= flash_byte_cnt + 1'b1;
-                                    if (flash_byte_cnt < 10'd7) begin
-                                        flash_tx_data <= flash_memory[(flash_addr[9:0] + flash_byte_cnt + 1'b1) & 10'h3FF];
-                                    end
+                                    flash_tx_data <= flash_memory[(flash_addr[9:0] + flash_byte_cnt + 1'b1) & 10'h3FF];
                                 end
                             end
                         end
@@ -212,11 +214,9 @@ module qspi_master_tb;
                             flash_bit_cnt <= flash_bit_cnt + 3'd2; // 2 bits at a time
                             if (flash_bit_cnt >= 3'd6) begin
                                 flash_bit_cnt <= 3'd0;
-                                if (flash_byte_cnt < 10'd8) begin
+                                if (flash_byte_cnt < 10'd255) begin
                                     flash_byte_cnt <= flash_byte_cnt + 1'b1;
-                                    if (flash_byte_cnt < 10'd7) begin
-                                        flash_tx_data <= flash_memory[(flash_addr[9:0] + flash_byte_cnt + 1'b1) & 10'h3FF];
-                                    end
+                                    flash_tx_data <= flash_memory[(flash_addr[9:0] + flash_byte_cnt + 1'b1) & 10'h3FF];
                                 end
                             end
                         end
@@ -224,11 +224,9 @@ module qspi_master_tb;
                             flash_bit_cnt <= flash_bit_cnt + 3'd4; // 4 bits at a time
                             if (flash_bit_cnt >= 3'd4) begin
                                 flash_bit_cnt <= 3'd0;
-                                if (flash_byte_cnt < 10'd8) begin
+                                if (flash_byte_cnt < 10'd255) begin
                                     flash_byte_cnt <= flash_byte_cnt + 1'b1;
-                                    if (flash_byte_cnt < 10'd7) begin
-                                        flash_tx_data <= flash_memory[(flash_addr[9:0] + flash_byte_cnt + 1'b1) & 10'h3FF];
-                                    end
+                                    flash_tx_data <= flash_memory[(flash_addr[9:0] + flash_byte_cnt + 1'b1) & 10'h3FF];
                                 end
                             end
                         end
@@ -245,14 +243,15 @@ module qspi_master_tb;
                                 
                                 if (flash_bit_cnt == 3'd7) begin
                                     flash_memory[(flash_addr[9:0] + flash_byte_cnt) & 10'h3FF] <= {flash_rx_data[6:0], flash_data_i[0]};
-                                    flash_byte_cnt <= flash_byte_cnt + 1'b1;
-                                    flash_bit_cnt <= 3'd0;
                                     
                                     // Debug print for write with byte count
                                     $display("Flash Write: byte_cnt=%0d, addr=0x%03x, data=0x%02x", 
                                     flash_byte_cnt,
                                     (flash_addr[9:0] + flash_byte_cnt) & 10'h3FF, 
                                         {flash_rx_data[6:0], flash_data_i[0]});
+                                    
+                                    flash_byte_cnt <= flash_byte_cnt + 1'b1;
+                                    flash_bit_cnt <= 3'd0;
                                 end
                             end
                             CMD_QPP: begin // x4 mode
@@ -380,16 +379,11 @@ module qspi_master_tb;
         s_axi_araddr = '0;
         s_axi_arvalid = 1'b0;
         s_axi_rready = 1'b0;
-        // flash_write_enable = 1'b0; // Remove this - it's handled in always_ff block
         
         // Initialize flash memory with pattern for testing
         for (int i = 0; i < 1024; i++) begin
             flash_memory[i] = 8'h00;
         end
-        
-        // Pre-load some test data at specific addresses
-        // This helps verify read operations work correctly
-        // Don't pre-load at 0x100 since we'll write there
         
         // Debug: Print initial DR values
         $display("\nInitial Data Register values:");
@@ -443,7 +437,7 @@ module qspi_master_tb;
         wait_transaction_complete();
         $display("Page Program completed");
         
-        // Debug: Print actual byte transfer sequence
+        // Debug: Print expected byte sequence
         $display("\nExpected byte sequence:");
         $display("  Byte 0: 0x67 (from DR0[7:0])");
         $display("  Byte 1: 0x45 (from DR0[15:8])");
