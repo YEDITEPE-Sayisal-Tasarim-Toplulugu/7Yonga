@@ -19,6 +19,9 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
+`include "axi/typedef.svh"
+`include "axi/assign.svh"
+`include "common_cells/registers.svh"
 
 module tb_core_data_top();
 
@@ -109,41 +112,12 @@ module tb_core_data_top();
         .axi_slv(AXI4_slave)
     );
     
-    `AXI_ASSIGN_TO_REQ(slaves_req, AXI4_slave)
-    `AXI_ASSIGN_TO_RESP(slaves_resp, AXI4_slave)
-    
-    axi_chan_logger #(
-      .TestTime  ( TestTime      ), // Time after clock, where sampling happens
-      .LoggerName( $sformatf("axi_logger_masterPort")),
-      .aw_chan_t ( aw_chan_slv_t ), // axi AW type
-      .w_chan_t  (  w_chan_t     ), // axi  W type
-      .b_chan_t  (  b_chan_slv_t ), // axi  B type
-      .ar_chan_t ( ar_chan_slv_t ), // axi AR type
-      .r_chan_t  (  r_chan_slv_t )  // axi  R type
-    ) i_slv_channel_logger (
-      .clk_i      ( clk         ),    // Clock
-      .rst_ni     ( ~reset      ),    // Asynchronous reset active low, when `1'b0` no sampling
-      .end_sim_i  ( 1'b0        ),
-      // AW channel
-      .aw_chan_i  ( slaves_req.aw        ),
-      .aw_valid_i ( slaves_req.aw_valid  ),
-      .aw_ready_i ( slaves_resp.aw_ready ),
-      //  W channel
-      .w_chan_i   ( slaves_req.w         ),
-      .w_valid_i  ( slaves_req.w_valid   ),
-      .w_ready_i  ( slaves_resp.w_ready  ),
-      //  B channel
-      .b_chan_i   ( slaves_resp.b        ),
-      .b_valid_i  ( slaves_resp.b_valid  ),
-      .b_ready_i  ( slaves_req.b_ready   ),
-      // AR channel
-      .ar_chan_i  ( slaves_req.ar        ),
-      .ar_valid_i ( slaves_req.ar_valid  ),
-      .ar_ready_i ( slaves_resp.ar_ready ),
-      //  R channel
-      .r_chan_i   ( slaves_resp.r        ),
-      .r_valid_i  ( slaves_resp.r_valid  ),
-      .r_ready_i  ( slaves_req.r_ready   )
+    axi_debug_slave #(
+      .LoggerName("dbg_master")
+    ) i_axi_dbg (
+      .clk_i  (clk),
+      .rst_ni (~reset),
+      .axi    (AXI4_master)
     );
     
     initial begin
@@ -321,7 +295,11 @@ module tb_core_data_top();
     initial begin
         repeat(5) @(posedge clk);
         
-        AXI4_WRITE(32'h3000_0000, 32'hbeafbeef);
+        DATA_WRITE(32'h3000_000a, 32'hdeaddead);
+        DATA_WRITE(32'h4000_000b, 32'h12345678);
+        
+        AXI4_WRITE(32'h3000_000c, 32'hbeafbeef);
+        
         
         repeat(5) @(posedge clk);
         $finish;
