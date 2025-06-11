@@ -52,4 +52,3 @@ create_run sim_1 -flow {Vivado Synthesis 2017}
 reset_run sim_1
 launch_runs sim_1 -jobs 4
 launch_simulation
-run 1s

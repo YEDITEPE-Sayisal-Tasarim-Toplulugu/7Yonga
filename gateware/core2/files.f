@@ -112,7 +112,6 @@ cv32e40p/rtl/cv32e40p_popcnt.sv
 cv32e40p/rtl/cv32e40p_prefetch_buffer.sv
 cv32e40p/rtl/cv32e40p_prefetch_controller.sv
 cv32e40p/rtl/cv32e40p_register_file_ff.sv
-cv32e40p/rtl/cv32e40p_register_file_latch.sv
 cv32e40p/rtl/cv32e40p_sleep_unit.sv
 cv32e40p/rtl/cv32e40p_top.sv
 testsuit/memory_system/amo_shim.sv
