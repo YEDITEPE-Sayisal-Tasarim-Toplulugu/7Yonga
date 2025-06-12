@@ -2,10 +2,12 @@
 // Contributor: Robert Balas <balasr@student.ethz.ch>
 //              Jeremy Bennett <jeremy.bennett@embecosm.com>
 
+`define CV32E40P_TRACE_EXECUTION 1
+
 module tb_suit #(
 	parameter INSTR_RDATA_WIDTH = 32,
-	parameter RAM_ADDR_WIDTH = 22,
-	parameter BOOT_ADDR = 'h180,
+	parameter RAM_ADDR_WIDTH = 30,
+	parameter BOOT_ADDR = 'h30000000,
 	parameter PULP_XPULP = 0,
 	parameter PULP_CLUSTER = 0,
 	parameter FPU = 0,
@@ -49,20 +51,30 @@ module tb_suit #(
   initial begin
 	if ($test$plusargs("vcd")) begin
 	  $dumpfile("riscy_tb.vcd");
-	  $dumpvars(0, tb_top);
+	  $dumpvars(0, tb_suit);
 	end
   end
 
   // we either load the provided firmware or execute a small test program that
   // doesn't do more than an infinite loop with some I/O
+  logic [31:0] programTemp_memory [0:32*1024];
   initial begin : load_prog
-	automatic string firmware;
+	automatic string firmware = "program.mem";
 	automatic int prog_size = 6;
 
-	if ($value$plusargs("firmware=%s", firmware)) begin
+	//if ($value$plusargs("firmware=%s", firmware)) begin
+	if (1) begin
 	  if ($test$plusargs("verbose"))
 		$display("[TESTBENCH] %t: loading firmware %0s ...", $time, firmware);
-	  $readmemh(firmware, wrapper_i.ram_i.dp_ram_i.mem);
+	  
+	  // $readmemh(firmware, wrapper_i.ram_i.dp_ram_i.mem);
+	  $readmemh(firmware, programTemp_memory);
+	  
+	  for (integer i=0; i<(32*1024)/8; i++) begin
+	       for (integer j=0; j<8; j++) begin
+	           wrapper_i.ram_i.dp_ram_i.mem[i*4+j] = programTemp_memory[i][j*8+:8];
+	       end
+	  end
 
 	end else begin
 	  $display("No firmware specified");

@@ -221,8 +221,10 @@ module tb_core_instruction_top();
     initial begin
         repeat(5) @(posedge clk);
         
+        INST_READ(32'h3000_00A1, CORE_inst_data);
+        INST_READ(32'h2000_00B2, CORE_inst_data);
+        
         AXI4_WRITE((32'h2000_0000+8'h0C), 32'hdeaddead);
-        INST_READ(32'h3000_0000, CORE_inst_data);
         
         repeat(5) @(posedge clk);
         $finish;

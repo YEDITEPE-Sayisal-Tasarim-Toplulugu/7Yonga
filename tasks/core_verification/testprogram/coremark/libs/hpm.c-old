@@ -1,0 +1,49 @@
+#include "hpm.h"
+
+#include <stdint.h>
+#include "csr.h"
+
+
+
+// HPM
+void stop_hpm_all_counters(void) {
+    csr_write(CSR_MCOUNTINHIBIT, -1);
+}
+
+void start_hpm_all_counters(void) {
+    csr_write(CSR_MCOUNTINHIBIT, 0);
+}
+
+void stop_hpm_counter(int n) {
+    csr_set(CSR_MCOUNTINHIBIT, n);
+}
+
+void start_hpm_counter(int n) {
+    csr_clear(CSR_MCOUNTINHIBIT, n);
+}
+
+void set_hpm_event(int n, int event) {
+    csr_write((CSR_MHPMEVENT3+(n-3)), event);
+}
+
+void get_hpm_event(int n) {
+    csr_read((CSR_MHPMEVENT3+(n-3)));
+}
+
+void set_hpm_counter_value(int n, int value) {
+    csr_write((CSR_MHPCOUNTER_0+(n)), value);
+}
+
+int get_hpm_counter_value(int n) {
+    csr_read((CSR_MHPCOUNTER_0+(n)));
+}
+
+void set_hpm_counterh_value(int n, int value) {
+    csr_write((CSR_MHPCOUNTERH_0+(n)), value);
+}
+
+int get_hpm_counterh_value(int n) {
+    csr_read((CSR_MHPCOUNTERH_0+(n)));
+}
+
+

@@ -1,5 +1,7 @@
+gateware/core_old
 # core repo:
 gateware/core/cv32e40p
+gateware/core_old/cv32e40p
 # Kurulum için:
 #   "gateware/core/Makefile"'ı, 
 #   "make setup" ile yürüt

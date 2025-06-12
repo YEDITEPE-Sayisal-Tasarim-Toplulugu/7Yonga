@@ -3,7 +3,7 @@
 
 ```tcl
 # Include yolunu tanımla (örneğin axi klasörü ./src/ içinde yer alıyor)
-set include_paths [list "./7Yonga/gateware/axi4/axi/include" "./7Yonga/gateware/pulp_common_cell/common_cells/include" "C:/Users/mhfur/Desktop/github_cloneS/7Yonga/gateware/inc"]
+set include_paths [list "./7Yonga/gateware/axi4/axi/include" "./7Yonga/gateware/pulp_common_cell/common_cells/include" "./7Yonga/gateware/inc"]
 
 # Simulation fileset'e ekle (her bir alt simulation filesetine ayrı ayrı eklenmeli)
 set_property include_dirs $include_paths [get_filesets sim_1]

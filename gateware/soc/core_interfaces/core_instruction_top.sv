@@ -222,56 +222,15 @@ module core_instruction_top
     `AXI_TYPEDEF_REQ_T(req_t, aw_chan_t, w_chan_t, ar_chan_t)
     `AXI_TYPEDEF_RESP_T(resp_t, b_chan_t, r_chan_t)
     
-    typedef struct packed {
-        logic     aw_ready;
-        logic     ar_ready;
-        logic     w_ready;
-        logic     b_valid;
-        // b_chan_t  b;
-        
-        logic [AxiID_WIDTH-1:0]            b_id;
-        logic [1:0] b_resp;
-        logic [AxiUSER_WIDTH-1:0]          b_user;
-        
-        logic     r_valid;
-        
-        // r_chan_t  r;
-        logic [AxiID_WIDTH-1:0]            r_id;
-        logic [AxiDataWidth-1:0]         r_data;
-        logic [1:0] r_resp;
-        logic           r_last;
-        logic [AxiUSER_WIDTH-1:0]          r_user;
-    } resp2_t;
-    
     req_t   req;
     resp_t  resp;
-    resp2_t  resp2;
     
     `AXI_ASSIGN_TO_REQ(req, slv)
     `AXI_ASSIGN_FROM_RESP(slv, resp)
-    
-    assign     resp2.aw_ready    = resp.aw_ready;
-    assign     resp2.ar_ready    = resp.ar_ready;
-    assign     resp2.w_ready     = resp.w_ready;
-    assign     resp2.b_valid     = resp.b_valid;
-    // b_chan_t  b;
-    
-    assign     resp2.b_id        = resp.b_id  ;
-    assign     resp2.b_resp      = resp.b_resp;
-    assign     resp2.b_user      = resp.b_user;
-    
-    assign     resp2.r_valid     = resp.r_valid;
-    
-    // r_chan_t  r;
-    assign     resp2.r_id        = resp.r_id  ;
-    assign     resp2.r_data      = resp.r_data;
-    assign     resp2.r_resp      = resp.r_resp;
-    assign     resp2.r_last      = resp.r_last;
-    assign     resp2.r_user      = resp.r_user;
-    
+
     axi_to_detailed_mem #(
         .axi_req_t    ( req_t    ),
-        .axi_resp_t   ( resp2_t   ),
+        .axi_resp_t   ( resp_t   ),
         .AddrWidth    ( AxiAddrWidth    ),
         .DataWidth    ( AxiDataWidth    ),
         .IdWidth      ( AxiID_WIDTH      ),
@@ -285,7 +244,7 @@ module core_instruction_top
         .rst_ni(~reset_i),
         .busy_o(),
         .axi_req_i    ( req     ),
-        .axi_resp_o   ( resp2    ),
+        .axi_resp_o   ( resp    ),
         .mem_lock_o   (),
         .mem_id_o     (),
         .mem_user_o   (),

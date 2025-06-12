@@ -365,6 +365,25 @@ module mm_ram #(
       || data_addr_i == 32'h2000_0010
       || data_addr_i[31:16] == 16'h1600))
   else $fatal("out of bounds write to %08x with %08x", data_addr_i, data_wdata_i);
+`else
+  always @(posedge clk_i) begin
+    if (rst_ni) begin
+      if (data_req_i && data_we_i) begin
+        if (!(data_addr_i < 2 ** RAM_ADDR_WIDTH ||
+              data_addr_i == 32'h1000_0000 ||
+              data_addr_i == 32'h1500_0000 ||
+              data_addr_i == 32'h1500_0004 ||
+              data_addr_i == 32'h2000_0000 ||
+              data_addr_i == 32'h2000_0004 ||
+              data_addr_i == 32'h2000_0008 ||
+              data_addr_i == 32'h2000_000c ||
+              data_addr_i == 32'h2000_0010 ||
+              data_addr_i[31:16] == 16'h1600)) begin
+          $fatal(1, "out of bounds write to %08x with %08x", data_addr_i, data_wdata_i);
+        end
+      end
+    end
+  end
 `endif
 
   logic [31:0] data_rdata_mux;

@@ -46,8 +46,8 @@ module soc_top
     logic [31:0] CORE_hart_id_w             = soc_config_pkg::CORE_HART_ID;
     logic [31:0] CORE_dm_exception_addr_w   = soc_config_pkg::CORE_DM_EXCEPTION_ADDR;
     
-    CORE_INST_INF CORE_instr_intf;
-    CORE_DATA_INF CORE_data_intf;
+    CORE_INST_INF CORE_instr_intf();
+    CORE_DATA_INF CORE_data_intf();
     
     AXI_BUS #(
         .AXI_ADDR_WIDTH (   soc_config_pkg::AXI4_CONF_ADDR_WIDTH    ),
@@ -63,7 +63,7 @@ module soc_top
         .AXI_USER_WIDTH (   soc_config_pkg::AXI4_CONF_USER_WIDTH    )
     ) AXI4_Masters[SYSTEM_BUS_MASTER_COUNT]();
     
-    localparam axi_pkg::xbar_rule_32_t AXI4_AddrMap[SYSTEM_BUS_SLAVE_COUNT] = '{
+    localparam axi_pkg::xbar_rule_32_t [SYSTEM_BUS_SLAVE_COUNT-1:0] AXI4_AddrMap = '{
         // PERIPHERALS_TOP_ADDR_RULE
         '{
             idx:            AXI4_SLAVE_PERIPHERALS_ID,
