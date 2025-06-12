@@ -1,149 +1,764 @@
-open_wave_config C:/Users/erhan/OneDrive/Masaüstü/systemverilogdenemeler/uart_tb_behav.wcfg
-WARNING: Simulation object /uart_tb/clk was not found in the design.
-WARNING: Simulation object /uart_tb/rst_n was not found in the design.
-WARNING: Simulation object /uart_tb/psel was not found in the design.
-WARNING: Simulation object /uart_tb/penable was not found in the design.
-WARNING: Simulation object /uart_tb/pwrite was not found in the design.
-WARNING: Simulation object /uart_tb/paddr was not found in the design.
-WARNING: Simulation object /uart_tb/pwdata was not found in the design.
-WARNING: Simulation object /uart_tb/prdata was not found in the design.
-WARNING: Simulation object /uart_tb/pready was not found in the design.
-WARNING: Simulation object /uart_tb/uart_rx was not found in the design.
-WARNING: Simulation object /uart_tb/uart_tx was not found in the design.
-WARNING: Simulation object /uart_tb/cfg_value was not found in the design.
-WARNING: Simulation object /uart_tb/rx_data was not found in the design.
-WARNING: Simulation object /uart_tb/CLK_PERIOD was not found in the design.
-WARNING: Simulation object /uart_tb/UART_CPB was not found in the design.
-WARNING: Simulation object /uart_tb/UART_STP was not found in the design.
-WARNING: Simulation object /uart_tb/UART_RDR was not found in the design.
-WARNING: Simulation object /uart_tb/UART_TDR was not found in the design.
-WARNING: Simulation object /uart_tb/UART_CFG was not found in the design.
-source timer_tb.tcl
-# set curr_wave [current_wave_config]
-# if { [string length $curr_wave] == 0 } {
-#   if { [llength [get_objects]] > 0} {
-#     add_wave /
-#     set_property needs_save false [current_wave_config]
-#   } else {
-#      send_msg_id Add_Wave-1 WARNING "No top level signals found. Simulator will start without a wave window. If you want to open a wave window go to 'File->New Waveform Configuration' or type 'create_wave_config' in the TCL console."
-#   }
-# }
 # run 1000ns
-Time=                   0, Counter=         0, Events=         0
 
---- Test 1: Timer in Up-counting mode ---
-Timer: PRE updated with 0x00000002
-AXI Write: Addr=0x00000000, Data=0x00000002 at time                65000
-Timer: ARE updated with 0x00000005
-AXI Write: Addr=0x00000004, Data=0x00000005 at time                95000
-Timer: MOD updated with 0x00000001
-AXI Write: Addr=0x00000010, Data=0x00000001 at time               125000
-Timer: ENA updated with 0x00000001
-AXI Write: Addr=0x0000000c, Data=0x00000001 at time               155000
-Time=              185000, Counter=         1, Events=         0
-Timer: Reading CNT = 0x00000001
-Time=              215000, Counter=         2, Events=         0
-AXI Read: Addr=0x00000014, Data=0x00000001 at time               225000
-SUCCESS: Counter value is correctly at 1
-Time=              245000, Counter=         3, Events=         0
-Time=              275000, Counter=         4, Events=         0
-Time=              305000, Counter=         5, Events=         0
-Time=              335000, Counter=         0, Events=         0
-Time=              345000, Counter=         0, Events=         1
-Time=              365000, Counter=         1, Events=         1
-Time=              395000, Counter=         2, Events=         1
-Time=              425000, Counter=         3, Events=         1
-Time=              455000, Counter=         4, Events=         1
-Time=              485000, Counter=         5, Events=         1
-Time=              515000, Counter=         0, Events=         1
-Time=              525000, Counter=         0, Events=         2
-Timer: Reading CNT = 0x00000000
-Time=              545000, Counter=         1, Events=         2
-AXI Read: Addr=0x00000014, Data=0x00000000 at time               555000
-Timer: Reading EVN = 0x00000002
-Time=              575000, Counter=         2, Events=         2
-AXI Read: Addr=0x00000018, Data=0x00000002 at time               585000
-Counter value after 30 cycles:          0
-Event counter value:          2
-SUCCESS: Event counter incremented to          2
+--- Test 1: I2C Write Transaction ---
+I2C: NBY =          2
+AXI Write: Addr=0x00000000, Data=0x00000002
+I2C: ADR = 0x50
+AXI Write: Addr=0x00000004, Data=0x00000050
+I2C: TDR = 0xdeadbeef
+AXI Write: Addr=0x0000000c, Data=0xdeadbeef
+AXI Read: Addr=0x00000000, Data=0x00000002
+NBY register check: 0x00000002
+AXI Read: Addr=0x00000004, Data=0x00000050
+ADR register check: 0x00000050
+AXI Read: Addr=0x0000000c, Data=0xdeadbeef
+TDR register check: 0xdeadbeef
 
---- Test 2: Clear counter ---
-Timer: CLR updated with 0x00000001
-Time=              605000, Counter=         3, Events=         2
-AXI Write: Addr=0x00000008, Data=0x00000001 at time               615000
-Time=              615000, Counter=         0, Events=         2
-Timer: Reading CNT = 0x00000000
-Time=              635000, Counter=         1, Events=         2
-AXI Read: Addr=0x00000014, Data=0x00000000 at time               645000
-SUCCESS: Counter cleared to 0
-
---- Test 3: Disable timer ---
-Timer: ENA updated with 0x00000000
-Time=              665000, Counter=         2, Events=         2
-AXI Write: Addr=0x0000000c, Data=0x00000000 at time               675000
-Timer: Reading CNT = 0x00000002
-AXI Read: Addr=0x00000014, Data=0x00000002 at time               855000
-ERROR: Counter incremented while disabled. Expected 0, got          2
-
---- Test 4: Down-counting mode ---
-Timer: MOD updated with 0x00000000
-AXI Write: Addr=0x00000010, Data=0x00000000 at time               885000
-Timer: CLR updated with 0x00000001
-AXI Write: Addr=0x00000008, Data=0x00000001 at time               915000
-Time=              915000, Counter=         0, Events=         2
-Timer: ENA updated with 0x00000001
-AXI Write: Addr=0x0000000c, Data=0x00000001 at time               945000
-Time=              945000, Counter=         5, Events=         2
-Timer: Reading CNT = 0x00000005
-Time=              975000, Counter=         4, Events=         2
-AXI Read: Addr=0x00000014, Data=0x00000005 at time               985000
-SUCCESS: Counter loaded with auto-reload value 5 in down-counting mode
-INFO: [USF-XSim-96] XSim completed. Design snapshot 'timer_tb_behav' loaded.
+Starting I2C transmission...
+I2C: CFG write = 0x00000001
+AXI Write: Addr=0x00000010, Data=0x00000001
+Waiting for transaction to complete...
+I2C: Starting WRITE transaction for address 0x50
+I2C State: START
+I2C: Loaded shift_reg = 0xa0 (addr=0x50, rw=0)
+I2C Slave: START condition detected
+INFO: [USF-XSim-96] XSim completed. Design snapshot 'i2c_master_tb_behav' loaded.
 INFO: [USF-XSim-97] XSim simulation ran for 1000ns
-launch_simulation: Time (s): cpu = 00:00:02 ; elapsed = 00:00:05 . Memory (MB): peak = 1851.883 ; gain = 0.000
+launch_simulation: Time (s): cpu = 00:00:02 ; elapsed = 00:00:06 . Memory (MB): peak = 1627.410 ; gain = 0.000
 run -all
-Time=             1005000, Counter=         3, Events=         2
-Timer: Reading CNT = 0x00000003
-Time=             1035000, Counter=         2, Events=         2
-AXI Read: Addr=0x00000014, Data=0x00000003 at time              1045000
-ERROR: Counter did not decrement correctly. Expected 4, got          3
+I2C Slave: Bit 0 = 1, addr so far = 0x01
+I2C: Sent bit[ 0], shifting to 0x40
+I2C: SEND_ADDR[bit= 1] setting SDA=0 from shift_reg[7]=0 (full=0x40)
+I2C Slave: Bit 1 = 0, addr so far = 0x02
+I2C: Sent bit[ 1], shifting to 0x80
+I2C: SEND_ADDR[bit= 2] setting SDA=1 from shift_reg[7]=1 (full=0x80)
+I2C Slave: Bit 2 = 1, addr so far = 0x05
+I2C: Sent bit[ 2], shifting to 0x00
+I2C: SEND_ADDR[bit= 3] setting SDA=0 from shift_reg[7]=0 (full=0x00)
+I2C Slave: Bit 3 = 0, addr so far = 0x0a
+I2C: Sent bit[ 3], shifting to 0x00
+I2C: SEND_ADDR[bit= 4] setting SDA=0 from shift_reg[7]=0 (full=0x00)
+I2C Slave: Bit 4 = 0, addr so far = 0x14
+I2C: Sent bit[ 4], shifting to 0x00
+I2C: SEND_ADDR[bit= 5] setting SDA=0 from shift_reg[7]=0 (full=0x00)
+I2C Slave: Bit 5 = 0, addr so far = 0x28
+I2C: Sent bit[ 5], shifting to 0x00
+I2C: SEND_ADDR[bit= 6] setting SDA=0 from shift_reg[7]=0 (full=0x00)
+I2C Slave: Bit 6 = 0, addr so far = 0x50
+I2C: Sent bit[ 6], shifting to 0x00
+I2C: SEND_ADDR[bit= 7] setting SDA=0 from shift_reg[7]=0 (full=0x00)
+I2C Slave: Bit 7 = 0, addr so far = 0xa0
+I2C Slave: Full byte received = 0xa0
+I2C Slave: Address = 0x50, R/W = 0
+I2C: Sent last bit[7], bit_cnt will be 8
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C Slave: Sending ACK
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: CFG read = 0x00000000
+AXI Read: Addr=0x00000010, Data=0x00000000
+After 10us: CFG status = 0x00000000
+ERROR: I2C Write transaction failed
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: CFG write = 0x00000000
+AXI Write: Addr=0x00000010, Data=0x00000000
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C Slave: Received data[0] = 0xff
+I2C: Waiting for ACK state transition (bit_cnt=8)
 
---- Test 5: Event counter clear ---
-Time=             1065000, Counter=         1, Events=         2
-Time=             1095000, Counter=         0, Events=         2
-Time=             1105000, Counter=         5, Events=         2
-Time=             1125000, Counter=         4, Events=         2
-Time=             1155000, Counter=         3, Events=         2
-Time=             1185000, Counter=         2, Events=         2
-Time=             1215000, Counter=         1, Events=         2
-Time=             1245000, Counter=         0, Events=         2
-Time=             1255000, Counter=         5, Events=         2
-Time=             1275000, Counter=         4, Events=         2
-Time=             1305000, Counter=         3, Events=         2
-Time=             1335000, Counter=         2, Events=         2
-Time=             1365000, Counter=         1, Events=         2
-Time=             1395000, Counter=         0, Events=         2
-Time=             1405000, Counter=         5, Events=         2
-Time=             1425000, Counter=         4, Events=         2
-Time=             1455000, Counter=         3, Events=         2
-Time=             1485000, Counter=         2, Events=         2
-Time=             1515000, Counter=         1, Events=         2
-Time=             1545000, Counter=         0, Events=         2
-Time=             1555000, Counter=         5, Events=         2
-Timer: Reading EVN = 0x00000002
-AXI Read: Addr=0x00000018, Data=0x00000002 at time              1575000
-Event counter value before clear:          2
-Time=             1575000, Counter=         4, Events=         2
-Timer: EVC updated with 0x00000001
-AXI Write: Addr=0x0000001c, Data=0x00000001 at time              1605000
-Time=             1605000, Counter=         3, Events=         0
-Timer: Reading EVN = 0x00000000
-AXI Read: Addr=0x00000018, Data=0x00000000 at time              1635000
-SUCCESS: Event counter cleared to 0
+--- Test 2: Simple State Machine Test ---
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: NBY =          1
+AXI Write: Addr=0x00000000, Data=0x00000001
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: ADR = 0x50
+AXI Write: Addr=0x00000004, Data=0x00000050
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: TDR = 0x12345678
+AXI Write: Addr=0x0000000c, Data=0x12345678
+Before start - State: SEND_ADDR
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: CFG write = 0x00000001
+AXI Write: Addr=0x00000010, Data=0x00000001
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+After 11475000 - State: SEND_ADDR, clk_cnt:    51, clk_en: 0
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+After 11525000 - State: SEND_ADDR, clk_cnt:    56, clk_en: 0
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+After 11575000 - State: SEND_ADDR, clk_cnt:    61, clk_en: 0
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+After 11625000 - State: SEND_ADDR, clk_cnt:     3, clk_en: 0
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+After 11675000 - State: SEND_ADDR, clk_cnt:     8, clk_en: 0
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
 
---- All Timer Tests Completed ---
-Time=             1635000, Counter=         2, Events=         0
-Time=             1665000, Counter=         1, Events=         0
-Time=             1695000, Counter=         0, Events=         0
-Time=             1705000, Counter=         5, Events=         0
-Time=             1725000, Counter=         4, Events=         0
+--- All I2C Tests Completed ---
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
+I2C: Waiting for ACK state transition (bit_cnt=8)
