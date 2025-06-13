@@ -34,7 +34,8 @@ module cv32e40p_tracer
 #(
     parameter FPU   = 0,
     parameter ZFINX = 0,
-    parameter UVM_DEBUG=1  // @mhfuzun
+    parameter UVM_DEBUG=1,  // @mhfuzun
+    parameter string  fn  // @mhfuzun
 ) (
     // Clock and Reset
     input logic clk_i,
@@ -119,7 +120,6 @@ module cv32e40p_tracer
   //bit     use_iss;
 
   integer f;
-  string  fn;
   integer cycles;
   logic [5:0] rd, rs1, rs2, rs3, rs4;
 
@@ -184,7 +184,7 @@ module cv32e40p_tracer
 
   initial begin
     wait(rst_n == 1'b1);
-    $sformat(fn, "trace_core_%h.log", hart_id_i);
+    // $sformat(fn, "trace_core_%h.log", hart_id_i);
     $sformat(info_tag, "CORE_TRACER %2d", hart_id_i);
     $display("[%s] Output filename is: %s", info_tag, fn);
     f = $fopen(fn, "w");

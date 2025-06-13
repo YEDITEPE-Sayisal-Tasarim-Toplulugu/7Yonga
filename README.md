@@ -29,7 +29,7 @@ serimi
 
 ## Tasarım
 <div style="background-color: white; display: inline-block; padding: 0px; border-radius: 8px; box-shadow: 0 0 0px rgba(0,0,0,0.1);">
-  <img src="tasarımlar/görseller/YONGA-TASARIM-TOP_v2.0.drawio.png" alt="Mikrodentleyici Tasarımı" width="500"/>
+  <img src="tasarımlar/görseller/YONGA-TASARIM-TOP_v3.0.drawio.png" alt="Mikrodentleyici Tasarımı" width="500"/>
 </div>
 
 ## İş Planı
@@ -37,7 +37,7 @@ serimi
 
 ## Dizin Yapısı:
 ```bash
-my-project/
+7Yonga/
 │
 ├── README.md               # Projenin tanıtım dosyası
 ├── LICENSE                 # Lisans bilgisi
@@ -56,26 +56,33 @@ my-project/
 │   └── dtr/                # Teknofest 2025 ~ DTR Aşaması
 │   └── ötr/                # Teknofest 2025 ~ OTR Aşaması
 |
-├── LDPC/                   # LDPC çalışma klasörü
-│   └── articles/           # LDPC ile ilgli referans kaynaklar
-│   └── pdfs/               # LPDC çalışma çıktıları
 │
 ├── firmware/               # Mikrodenetleyici yazılımlarını içerir
+│   └── examples/           # Örnek kaynak kodlar
+│   └── step0/              # Verification için kullanılan en basit test template'i
+|
+├── tasks/                  # Teknofest 2025 gerçekleştirilmesi gereken görevleri içerir
+│   └── core_verification/  # Çekirdek Doğrulaması Test Ortamı
+│     └── testprogram/      # Test için kullanılan programları içerir
+│     └── testsuit/         # Top modülü, Çekirdek için sarıcı modülü ve log üretici modülü içerir
+│   └── LDPC/               # LDPC çalışma klasörü
+│     └── articles/         # LDPC ile ilgli referans kaynaklar
+│     └── pdfs/             # LPDC çalışma çıktıları
 |
 ├── gateware/               # HDL kodları
 │   └── axi4/               # AXI4 Klasörü
 │     └── axi/              # Harici AXI4 reposu
 │     └── Makefile          # AXI4 reposunu klonlamak için betik
 │     └── README.md         # AXI4 reposu ile ilgili karşılaşılan hatalar
-│   └── core/               # CORE Klasörü
+│   └── core/               # CORE Klasörü (CV32E40P çekirdeğinin clone reposu)
 │   └── inc/                # SOC için Systemverilog Header dosyaları
 │   └── peripherals/        # Mikrodenetleyici Çevre Birimleri klasörü
 │     └── uart/             # UART Çevre Birimi HDL ve test kodları
 │     └── README.MD         #
-│   └── pulp_common_cell/   # Pulp Common Cell klasörü, harici repo içerir.
+│   └── pulp_common_cell/   # Pulp Common Cell klasörü, harici repo içerir
 │     └── Makefile          # Pulp Common Cell reposunu klonlamak için betik
 │   └── soc/                # Mikrodenetleyici SOC yapısına ait HDL kodlarını içerir
-│     └── adapter/          # SOC içerisinde bulunan arayüzler için arayüz dönüşümlerini sağlar.
+│     └── adapter/          # SOC içerisinde bulunan arayüzler için arayüz dönüşümlerini sağlar
 │     └── core_interfaces/  # Çekirdeğin SOC içerisindeki sarıcı data&instruction arayüzlerini içerir
 │   └── test/               # HDL test klasörü
 │

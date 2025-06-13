@@ -22,7 +22,9 @@ module tb_subsystem #(
     parameter FPU_OTHERS_LAT = 0,
     parameter ZFINX = 0,
     parameter NUM_MHPMCOUNTERS = 1,
-    parameter DM_HALTADDRESS = 32'h1A110800
+    parameter DM_HALTADDRESS = 32'h1A110800,
+
+    parameter string INST_TRACER_LOG_FILE_NAME = "unnamedlogfile.log"
 ) (
     input logic clk_i,
     input logic rst_ni,
@@ -122,12 +124,14 @@ module tb_subsystem #(
     /// cv32e40p/bhv içinden çekirdek + log arayüzleri.
     cv32e40p_tb_wrapper #(
         .COREV_PULP      (PULP_XPULP), // PULP ISA Extension (incl. custom CSRs and hardware loop, excl. cv.elw)
-        .COREV_CLUSTER    (PULP_CLUSTER),  // PULP Cluster interface (incl. cv.elw)
+        .COREV_CLUSTER   (PULP_CLUSTER),  // PULP Cluster interface (incl. cv.elw)
         .FPU             (FPU),// Floating Point Unit (interfaced via APU interface)
         .FPU_ADDMUL_LAT  (FPU_ADDMUL_LAT), // Floating-Point ADDition/MULtiplication computing lane pipeline registers number
         .FPU_OTHERS_LAT  (FPU_OTHERS_LAT), // Floating-Point COMParison/CONVersion computing lanes pipeline registers number
         .ZFINX           (ZFINX),// Float-in-General Purpose registers
-        .NUM_MHPMCOUNTERS(NUM_MHPMCOUNTERS)
+        .NUM_MHPMCOUNTERS(NUM_MHPMCOUNTERS),
+
+        .INST_TRACER_LOG_FILE_NAME   (INST_TRACER_LOG_FILE_NAME)
     ) top_i (
         // Clock and Reset
         .clk_i (clk_i),

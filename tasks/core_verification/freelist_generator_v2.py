@@ -1,3 +1,7 @@
+# 7Yonga
+# Yeditepe Üniversitesi, Sayısal Tasarım Topluluğu
+# 06.2025
+
 import argparse
 import os
 import re

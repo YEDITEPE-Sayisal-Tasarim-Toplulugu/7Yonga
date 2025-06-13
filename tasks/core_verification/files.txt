@@ -1,4 +1,3 @@
-tasks/core_verification/testsuit/inc/uvm_pkg.sv
 gateware/core/cv32e40p/rtl/vendor/pulp_platform_common_cells/src/deprecated/*.sv
 gateware/core/cv32e40p/rtl/vendor/pulp_platform_common_cells/src/*.sv
 gateware/core/cv32e40p/rtl/vendor/pulp_platform_fpnew/src/*.sv

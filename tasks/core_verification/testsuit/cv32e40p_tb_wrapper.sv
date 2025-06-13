@@ -58,7 +58,9 @@ module cv32e40p_tb_wrapper
     parameter FPU_ADDMUL_LAT = 0,  // Floating-Point ADDition/MULtiplication computing lane pipeline registers number
     parameter FPU_OTHERS_LAT = 0,  // Floating-Point COMParison/CONVersion computing lanes pipeline registers number
     parameter ZFINX = 0,  // Float-in-General Purpose registers
-    parameter NUM_MHPMCOUNTERS = 1
+    parameter NUM_MHPMCOUNTERS = 1,
+
+    parameter string INST_TRACER_LOG_FILE_NAME = "unnamedlogfile.log"
 ) (
     // Clock and Reset
     input logic clk_i,
@@ -152,7 +154,8 @@ module cv32e40p_tb_wrapper
 `ifdef CV32E40P_TRACE_EXECUTION
   cv32e40p_tracer #(
       .FPU  (FPU),
-      .ZFINX(ZFINX)
+      .ZFINX(ZFINX),
+      .fn(INST_TRACER_LOG_FILE_NAME)
   ) tracer_i (
       .clk_i(cv32e40p_top_i.core_i.clk_i),  // always-running clock for tracing
       .rst_n(cv32e40p_top_i.core_i.rst_ni),
