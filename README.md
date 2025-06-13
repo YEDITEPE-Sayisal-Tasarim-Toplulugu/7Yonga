@@ -68,6 +68,7 @@ serimi
 │   └── LDPC/               # LDPC çalışma klasörü
 │     └── articles/         # LDPC ile ilgli referans kaynaklar
 │     └── pdfs/             # LPDC çalışma çıktıları
+│   └── Verif/              # Verification ilgili dosyaları
 |
 ├── gateware/               # HDL kodları
 │   └── axi4/               # AXI4 Klasörü
