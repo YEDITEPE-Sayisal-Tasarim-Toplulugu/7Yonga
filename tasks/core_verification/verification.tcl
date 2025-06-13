@@ -4,8 +4,8 @@
 
 set CURRENT_DIR [pwd]
 set CORE_DIR [pwd]/../../gateware/core
-# set TESTPROGRAM_DIR ${CURRENT_DIR}/testprogram/firstapp
-set TESTPROGRAM_DIR ${CURRENT_DIR}/testprogram/coremark/OUT
+set TESTPROGRAM_DIR ${CURRENT_DIR}/testprogram/firstapp
+# set TESTPROGRAM_DIR ${CURRENT_DIR}/testprogram/coremark/OUT
 set OUT_DIR ${CURRENT_DIR}/OUT
 
 create_project my_sim_proj ${OUT_DIR}/my_sim_proj -part xc7a35tcpg236-1 -force
@@ -45,7 +45,11 @@ set include_paths [list "${CURRENT_DIR}/testsuit" \
 # Simulation fileset'e ekle (her bir alt simulation filesetine ayrı ayrı eklenmeli)
 set_property include_dirs $include_paths [get_filesets sim_1]
 
-set_property verilog_define "VERILATOR" [get_filesets sim_1]
+
+set definition_directives [list "VERILATOR" \
+                                "LOG_FILE_NAME=\"${CURRENT_DIR}/cv32e40p_program.log\""]
+
+set_property verilog_define $definition_directives [get_filesets sim_1]
 
 # Dosyaları ekle
 add_files {*}$valid_files
@@ -60,4 +64,4 @@ create_run sim_1 -flow {Vivado Synthesis 2017}
 reset_run sim_1
 launch_runs sim_1 -jobs 4
 launch_simulation
-run 5s
+# run 5s

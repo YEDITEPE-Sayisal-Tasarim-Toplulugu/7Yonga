@@ -23,23 +23,20 @@
 
 module cv32e_inst2data_inf_cvt
     (
-        input CORE_INST_INF_M2S inst_slave_inf_m2s,
-        output CORE_INST_INF_S2M inst_slave_inf_s2m,
-        
-        input CORE_DATA_INF_S2M data_master_inf_s2m,
-        output CORE_DATA_INF_M2S data_master_inf_m2s
+        CORE_INST_INF.Slave inst_slave_inf,
+        CORE_DATA_INF.Master data_master_inf
     );
     
     always_comb begin
-        data_master_inf_m2s.data_addr = inst_slave_inf_m2s.instr_addr;
-        data_master_inf_m2s.data_req = inst_slave_inf_m2s.instr_req;
-        data_master_inf_m2s.data_we = 0;
-        data_master_inf_m2s.data_be = 0;
-        data_master_inf_m2s.data_wdata = 0;
+        data_master_inf.data_addr = inst_slave_inf.instr_addr;
+        data_master_inf.data_req = inst_slave_inf.instr_req;
+        data_master_inf.data_we = 0;
+        data_master_inf.data_be = 0;
+        data_master_inf.data_wdata = 0;
         
-        inst_slave_inf_s2m.instr_gnt = data_master_inf_s2m.data_gnt;
-        inst_slave_inf_s2m.instr_rvalid = data_master_inf_s2m.data_rvalid;
-        inst_slave_inf_s2m.instr_rdata = data_master_inf_s2m.data_rdata;
+        inst_slave_inf.instr_gnt = data_master_inf.data_gnt;
+        inst_slave_inf.instr_rvalid = data_master_inf.data_rvalid;
+        inst_slave_inf.instr_rdata = data_master_inf.data_rdata;
     end
     
 endmodule

@@ -21,20 +21,21 @@
 
 module interface_arbiter
     #(parameter
-            IN_COUNT = 2
+            IN_COUNT = 2,
+            IN_COUNT_LOG = ((IN_COUNT%2) ? $clog2(IN_COUNT) : $clog2(IN_COUNT) + 1)
     )
     (
         input logic clk_i, reset_i,
         
         input logic [IN_COUNT-1:0] valid_list_i,
-        output logic [$clog2(IN_COUNT):0] sel_o
+        output logic [IN_COUNT_LOG-1:0] sel_o
     );
     
     logic [IN_COUNT-1:0] arbiter_rr_used_r, arbiter_rr_used_w;
     logic [IN_COUNT-1:0] used_list_w, avaliable_list_w, search_list_w;
     
     logic found_w;
-    logic [$clog2(IN_COUNT):0] sel_w;
+    logic [IN_COUNT_LOG-1:0] sel_w;
     
     always_ff @(posedge clk_i, posedge reset_i) begin
         if (reset_i) begin
@@ -60,14 +61,13 @@ module interface_arbiter
         for (integer i=0; i<IN_COUNT; i++) begin
             if (search_list_w[i]) begin
                 found_w = 1'b1;
-                sel_w = i[$clog2(IN_COUNT):0];
+                sel_w = i[IN_COUNT_LOG-1:0];
             end
         end
         
+        arbiter_rr_used_w = arbiter_rr_used_r;
         if (found_w) begin
             arbiter_rr_used_w[sel_w] = 1'b1;
-        end else begin
-            arbiter_rr_used_w = arbiter_rr_used_r;
         end
         
         sel_o = sel_w;

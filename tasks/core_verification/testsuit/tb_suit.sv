@@ -16,6 +16,12 @@ module tb_suit #(
 	parameter DM_HALTADDRESS = 32'h1A110800
 );
 
+`ifdef LOG_FILE_NAME
+	localparam INST_TRACER_LOG_FILE_NAME = `LOG_FILE_NAME;
+`else
+	localparam INST_TRACER_LOG_FILE_NAME = "./cv32e40p_program.log";
+`endif
+
   // comment to record execution trace
   //`define TRACE_EXECUTION
 
@@ -139,6 +145,22 @@ module tb_suit #(
 	  if (exit_value == 0) $display("EXIT SUCCESS");
 	  else $display("EXIT FAILURE: %d", exit_value);
 	  $finish;
+   end
+  end
+
+  reg tests_done_r;
+  always_ff @(posedge clk, negedge rst_n) begin
+	if (~rst_n) begin
+		tests_done_r <= 0;
+	end else if (tests_passed) begin
+		tests_done_r <= 1;
+	end
+  end
+  
+  always_ff @(posedge clk) begin
+	if (tests_done_r) begin
+		$display("TEST DONE");
+	  	$finish;
 	end
   end
 
@@ -173,7 +195,9 @@ module tb_suit #(
 		.FPU              (FPU),
 		.ZFINX            (ZFINX),
 		.NUM_MHPMCOUNTERS (NUM_MHPMCOUNTERS),
-		.DM_HALTADDRESS   (DM_HALTADDRESS)
+		.DM_HALTADDRESS   (DM_HALTADDRESS),
+
+		.INST_TRACER_LOG_FILE_NAME(INST_TRACER_LOG_FILE_NAME)
 	) wrapper_i (
 		.clk_i         (clk),
 		.rst_ni        (rst_n),
