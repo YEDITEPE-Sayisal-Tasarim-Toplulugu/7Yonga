@@ -1,0 +1,49 @@
+`ifndef AXI_LITE_MONITOR_CBS__SV
+`define AXI_LITE_MONITOR_CBS__SV
+
+class axi_lite_dummy_monitor_cbs extends uvm_callback;
+
+  
+  axi_lite_scoreboard scoreboard_ref;
+
+  covergroup axi_cov;
+    coverpoint tr.kind;
+    coverpoint tr.addr;
+  endgroup
+
+  
+  function new(string name = "axi_lite_dummy_monitor_cbs");
+    super.new(name);
+    axi_cov = new();
+  endfunction
+
+  virtual function void trans_observed(
+    axi_lite_dummy_monitor monitor,
+    axi_lite_rw tr
+  );
+  
+    if ($isunknown(tr.data)) begin
+      `uvm_error("AXI/LITE/CB", $sformatf("Data has unknown (X/Z) values at addr 0x%0h", tr.addr))
+    end
+
+  
+    if (tr.addr > 32'h0000_AAAA) begin
+      `uvm_warning("AXI/LITE/CB", $sformatf("Address 0x%0h is out of expected range", tr.addr))
+    end
+
+  
+    `uvm_info("AXI/LITE/CB", $sformatf("Observed %s transaction at addr=0x%0h, data=0x%0h",
+              (tr.kind == axi_rw_e::READ ? "READ" : "WRITE"), tr.addr, tr.data), UVM_MEDIUM)
+
+  
+    axi_cov.sample();
+
+  
+    if (scoreboard_ref != null) begin
+      scoreboard_ref.write_expected(tr);
+    end
+  endfunction
+
+endclass
+
+`endif
