@@ -61,6 +61,20 @@ if (soc_config_pkg::USE_SOFT_MEMORY_MODULES) begin : SOC_CONFG_SOFT
         cv32_data_inf_i.data_gnt <= cv32_data_inf_i.data_req;
         cv32_data_inf_i.data_rvalid <= cv32_data_inf_i.data_req & ~cv32_data_inf_i.data_we;
     end
+end else if (soc_config_pkg::USE_BRAM_MEMORY_MODULES) begin
+    blk_memory BRAM_MEMORY (
+        .clka(clk_i),    // input wire clka
+        .ena(cv32_data_inf_i.data_req),      // input wire ena
+        .wea({(4){cv32_data_inf_i.data_we}} & cv32_data_inf_i.data_be),      // input wire [3 : 0] wea
+        .addra(cv32_data_inf_i.data_addr),  // input wire [12 : 0] addra
+        .dina(cv32_data_inf_i.data_wdata),    // input wire [31 : 0] dina
+        .douta(cv32_data_inf_i.data_rdata)  // output wire [31 : 0] douta
+    );
+    
+    always_ff @(posedge clk_i) begin
+        cv32_data_inf_i.data_gnt <= cv32_data_inf_i.data_req;
+        cv32_data_inf_i.data_rvalid <= cv32_data_inf_i.data_req & ~cv32_data_inf_i.data_we;
+    end
 end
 
 endmodule
@@ -97,8 +111,32 @@ if (soc_config_pkg::USE_SOFT_MEMORY_MODULES) begin : SOC_CONFG_SOFT
     );
 
     always_ff @(posedge clk_i) begin
-        cv32_data_inf_i.data_gnt <= cv32_data_inf_i.data_req;
-        cv32_data_inf_i.data_rvalid <= cv32_data_inf_i.data_req & ~cv32_data_inf_i.data_we;
+        cv32_data_inf_i.data_gnt <= cv32_data_inf_i.data_req & ~cv32_data_inf_i.data_gnt;
+        /*
+            data_rvalid_i will be high for exactly one cycle to signal 
+            the end of the response phase of for both read and write transactions. 
+            For a read transaction data_rdata_i holds valid data when data_rvalid_i is high.
+        */
+        cv32_data_inf_i.data_rvalid <= cv32_data_inf_i.data_req & ~cv32_data_inf_i.data_gnt /*& ~cv32_data_inf_i.data_we*/;
+    end
+end else if (soc_config_pkg::USE_BRAM_MEMORY_MODULES) begin
+    blk_memory BRAM_MEMORY (
+        .clka(clk_i),    // input wire clka
+        .ena(cv32_data_inf_i.data_req),      // input wire ena
+        .wea({(4){cv32_data_inf_i.data_we}} & cv32_data_inf_i.data_be),      // input wire [3 : 0] wea
+        .addra(cv32_data_inf_i.data_addr),  // input wire [12 : 0] addra
+        .dina(cv32_data_inf_i.data_wdata),    // input wire [31 : 0] dina
+        .douta(cv32_data_inf_i.data_rdata)  // output wire [31 : 0] douta
+    );
+    
+    always_ff @(posedge clk_i) begin
+        cv32_data_inf_i.data_gnt <= cv32_data_inf_i.data_req & ~cv32_data_inf_i.data_gnt;
+        /*
+            data_rvalid_i will be high for exactly one cycle to signal 
+            the end of the response phase of for both read and write transactions. 
+            For a read transaction data_rdata_i holds valid data when data_rvalid_i is high.
+        */
+        cv32_data_inf_i.data_rvalid <= cv32_data_inf_i.data_req & ~cv32_data_inf_i.data_gnt /*& ~cv32_data_inf_i.data_we*/;
     end
 end
 
@@ -117,6 +155,7 @@ module inst_rom
 import soc_config_pkg::*;
 
 if (soc_config_pkg::USE_SOFT_ROM_MODULES) begin : SOC_CONFG_SOFT
+/*
     memory_model_rom
     #(
         .WORD_SIZE_BITS(32),
@@ -128,6 +167,17 @@ if (soc_config_pkg::USE_SOFT_ROM_MODULES) begin : SOC_CONFG_SOFT
 
         .read_addr_i(cv32_inst_inf_i.instr_addr),
         .read_data_o(cv32_inst_inf_i.instr_rdata)
+    );
+    */
+    
+    boot_code ROM
+    (
+        .CLK            (clk_i),
+        .RSTN           (1'b1),
+
+        .CSN            (1'b0),
+        .A              (cv32_inst_inf_i.instr_addr),
+        .Q              (cv32_inst_inf_i.instr_rdata)
     );
 
     always_ff @(posedge clk_i) begin

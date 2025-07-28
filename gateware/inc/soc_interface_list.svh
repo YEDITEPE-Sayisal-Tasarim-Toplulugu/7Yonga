@@ -64,6 +64,22 @@ interface CORE_DATA_INF #();
 
 endinterface
 
+interface SOC_PERIPHERAL_INF #();
+  logic UART0_rx;
+  logic UART0_tx;
+
+  modport Master (
+    output UART0_rx,
+    input UART0_tx
+  );
+
+  modport Slave (
+    output UART0_tx,
+    input UART0_rx
+  );
+
+endinterface
+
 `endif //__SOC_INTERFACE_LIST_SVH__
 
 

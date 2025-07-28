@@ -68,13 +68,13 @@ module core_instruction_top
     } _addr_rule_t;
     
     _addr_rule_t DECODER_ROM_ADDR_RULE = {
-        32'd0,
+        32'd1,
         soc_addr_rules_pkg::ROM_ADDR_RULE.start_addr,
         soc_addr_rules_pkg::ROM_ADDR_RULE.end_addr
     };
     
     _addr_rule_t DECODER_INST_SRAM_ADDR_RULE = {
-        32'd1,
+        32'd0,
         soc_addr_rules_pkg::INST_SRAM_ADDR_RULE.start_addr,
         soc_addr_rules_pkg::INST_SRAM_ADDR_RULE.end_addr
     };
@@ -97,8 +97,8 @@ module core_instruction_top
       .addr_i(CORE_inst_inf_i.instr_addr),
       /// Address map: rule with the highest array position wins on collision
       .addr_map_i({
-      DECODER_ROM_ADDR_RULE,
-      DECODER_INST_SRAM_ADDR_RULE
+      DECODER_INST_SRAM_ADDR_RULE,
+      DECODER_ROM_ADDR_RULE
       }),
       /// Decoded index.
       .idx_o(INST_Intf_decoder_sel_w),
@@ -159,6 +159,8 @@ module core_instruction_top
         .cv32_data_inf_i(SRAM_data_inf_w)
     );
     
+    // axi_to_mem_intf modulü port içindeki struct yapılarında hata vermektedir.
+    // tahminen vivado ile alakalı
     /*
     axi_to_mem_intf #(
       /// See `axi_to_mem`, parameter `AddrWidth`.

@@ -29,7 +29,9 @@ import axi_pkg::*;
 
 module soc_top
     (
-        input logic clk_i, reset_i
+        input logic clk_i, reset_i,
+        
+        SOC_PERIPHERAL_INF.Slave    PERIPHERAL_INTF
     );
     
     localparam int unsigned SYSTEM_BUS_MASTER_COUNT     = 32'd1;
@@ -63,29 +65,57 @@ module soc_top
         .AXI_USER_WIDTH (   soc_config_pkg::AXI4_CONF_USER_WIDTH    )
     ) AXI4_Masters[SYSTEM_BUS_MASTER_COUNT]();
     
-    localparam axi_pkg::xbar_rule_32_t [SYSTEM_BUS_SLAVE_COUNT-1:0] AXI4_AddrMap = '{
-        // PERIPHERALS_TOP_ADDR_RULE
-        '{
-            idx:            AXI4_SLAVE_PERIPHERALS_ID,
-            start_addr:     soc_addr_rules_pkg::PERIPHERALS_TOP_ADDR_RULE.start_addr,
-            end_addr:       soc_addr_rules_pkg::PERIPHERALS_TOP_ADDR_RULE.end_addr,
-            default:        '0
-        },
-        // DATA_SRAM_ADDR_RULE
-        '{
-            idx:            AXI4_SLAVE_DATA_SRAM_ID,
-            start_addr:     soc_addr_rules_pkg::DATA_SRAM_ADDR_RULE.start_addr,
-            end_addr:       soc_addr_rules_pkg::DATA_SRAM_ADDR_RULE.end_addr,
-            default:        '0
-        },
-        // INST_SRAM_ADDR_RULE
-        '{
-            idx:            AXI4_SLAVE_INST_SRAM_ID,
-            start_addr:     soc_addr_rules_pkg::INST_SRAM_ADDR_RULE.start_addr,
-            end_addr:       soc_addr_rules_pkg::INST_SRAM_ADDR_RULE.end_addr,
-            default:        '0
-        }
-    };
+    axi_pkg::xbar_rule_32_t [SYSTEM_BUS_SLAVE_COUNT-1:0] AXI4_AddrMap;
+    
+    assign AXI4_AddrMap[0] = {AXI4_SLAVE_INST_SRAM_ID, soc_addr_rules_pkg::INST_SRAM_ADDR_RULE.start_addr, soc_addr_rules_pkg::INST_SRAM_ADDR_RULE.end_addr};
+    assign AXI4_AddrMap[1] = {AXI4_SLAVE_DATA_SRAM_ID, soc_addr_rules_pkg::DATA_SRAM_ADDR_RULE.start_addr, soc_addr_rules_pkg::DATA_SRAM_ADDR_RULE.end_addr};
+    assign AXI4_AddrMap[2] = {AXI4_SLAVE_PERIPHERALS_ID, soc_addr_rules_pkg::PERIPHERALS_TOP_ADDR_RULE.start_addr, soc_addr_rules_pkg::PERIPHERALS_TOP_ADDR_RULE.end_addr};
+    
+    ////////////////////////////////////////////////////////////////
+    logic core_data_intf_req_r, core_data_intf_we_r, core_data_intf_be_r, core_data_intf_gnt_r;
+    logic [soc_config_pkg::AXI4_CONF_ADDR_WIDTH-1:0] core_data_intf_addr_r;
+    logic [soc_config_pkg::AXI4_CONF_DATA_WIDTH-1:0] core_data_intf_data_r;
+    
+    logic core_data_intf_req_w, core_data_intf_we_w, core_data_intf_be_w, core_data_intf_gnt_w;
+    logic [soc_config_pkg::AXI4_CONF_ADDR_WIDTH-1:0] core_data_intf_addr_w;
+    logic [soc_config_pkg::AXI4_CONF_DATA_WIDTH-1:0] core_data_intf_data_w;
+    
+    always_ff @(posedge clk_i, posedge reset_i) begin
+        if (reset_i) begin
+            core_data_intf_req_r    <= 0;
+            core_data_intf_we_r     <= 0;
+            core_data_intf_be_r     <= 0;
+            core_data_intf_addr_r   <= 0;
+            core_data_intf_data_r   <= 0;
+            core_data_intf_gnt_r    <= 0;
+        end else begin
+            if (core_data_intf_gnt_w & core_data_intf_req_w) begin
+                core_data_intf_req_r    <= 1'b1;
+                core_data_intf_we_r     <= core_data_intf_we_w;
+                core_data_intf_be_r     <= core_data_intf_be_w;
+                core_data_intf_addr_r   <= core_data_intf_addr_w;
+                core_data_intf_data_r   <= core_data_intf_data_w;
+                core_data_intf_gnt_r    <= 1'b0;
+            end else if (CORE_data_intf.data_rvalid) begin
+                core_data_intf_req_r    <= 1'b0;
+            end
+            
+            if (core_data_intf_req_r & ~core_data_intf_gnt_r) begin
+                core_data_intf_gnt_r <= CORE_data_intf.data_gnt;
+            end
+        end
+    end
+    
+    always_comb begin
+        CORE_data_intf.data_req     = core_data_intf_req_r & ~core_data_intf_gnt_r;
+        CORE_data_intf.data_we      = core_data_intf_we_r;
+        CORE_data_intf.data_be      = core_data_intf_be_r;
+        CORE_data_intf.data_addr    = core_data_intf_addr_r;
+        CORE_data_intf.data_wdata   = core_data_intf_data_r;
+        
+        core_data_intf_gnt_w        = ~core_data_intf_req_r;
+    end
+    ////////////////////////////////////////////////////////////////
     
     cv32e40p_top #(
         .COREV_PULP         (soc_config_pkg::CORE_CONF_COREV_PULP),  // PULP ISA Extension (incl. custom CSRs and hardware loop, excl. cv.elw)
@@ -101,42 +131,42 @@ module soc_top
         .rst_ni                 (~reset_i   ),
         
         // PULP clock enable (only used if COREV_CLUSTER = 1)
-        .pulp_clock_en_i        (1'b0),
+        .pulp_clock_en_i        ( 1'b0),
         // Enable all clock gates for testing
-        .scan_cg_en_i           (1'b1),  
+        .scan_cg_en_i           ( 1'b1),  
         
         // Core ID, Cluster ID, debug mode halt address and boot address are considered more or less static
-        .boot_addr_i            (CORE_boot_addr_w               ),
-        .mtvec_addr_i           (CORE_mtvec_addr_w              ),
-        .dm_halt_addr_i         (CORE_dm_halt_addr_w            ),
-        .hart_id_i              (CORE_hart_id_w                 ),
-        .dm_exception_addr_i    (CORE_dm_exception_addr_w       ),
+        .boot_addr_i            ( CORE_boot_addr_w              ),
+        .mtvec_addr_i           ( CORE_mtvec_addr_w             ),
+        .dm_halt_addr_i         ( CORE_dm_halt_addr_w           ),
+        .hart_id_i              ( CORE_hart_id_w                ),
+        .dm_exception_addr_i    ( CORE_dm_exception_addr_w      ),
         
         // Instruction memory interface
-        .instr_req_o            (CORE_instr_intf.instr_req      ),
-        .instr_gnt_i            (CORE_instr_intf.instr_gnt      ),
-        .instr_rvalid_i         (CORE_instr_intf.instr_rvalid   ),
-        .instr_addr_o           (CORE_instr_intf.instr_addr     ),
-        .instr_rdata_i          (CORE_instr_intf.instr_rdata    ),
+        .instr_req_o            ( CORE_instr_intf.instr_req     ),
+        .instr_gnt_i            ( CORE_instr_intf.instr_gnt     ),
+        .instr_rvalid_i         ( CORE_instr_intf.instr_rvalid  ),
+        .instr_addr_o           ( CORE_instr_intf.instr_addr    ),
+        .instr_rdata_i          ( CORE_instr_intf.instr_rdata   ),
         
         // Data memory interface
-        .data_req_o             (CORE_data_intf.data_req        ),
-        .data_gnt_i             (CORE_data_intf.data_gnt        ),
-        .data_rvalid_i          (CORE_data_intf.data_rvalid     ),
-        .data_we_o              (CORE_data_intf.data_we         ),
-        .data_be_o              (CORE_data_intf.data_be         ),
-        .data_addr_o            (CORE_data_intf.data_addr       ),
-        .data_wdata_o           (CORE_data_intf.data_wdata      ),
-        .data_rdata_i           (CORE_data_intf.data_rdata      ),
+        .data_req_o             ( core_data_intf_req_w          ),
+        .data_gnt_i             ( core_data_intf_gnt_w          ),
+        .data_rvalid_i          ( CORE_data_intf.data_rvalid    ),
+        .data_we_o              ( core_data_intf_we_w           ),
+        .data_be_o              ( core_data_intf_be_w           ),
+        .data_addr_o            ( core_data_intf_addr_w         ),
+        .data_wdata_o           ( core_data_intf_data_w         ),
+        .data_rdata_i           ( CORE_data_intf.data_rdata     ),
         
         // Interrupt inputs
         // CLINT interrupts + CLINT extension interrupts
-        .irq_i                  ('d0),
+        .irq_i                  ( 'd0),
         .irq_ack_o              (),
         .irq_id_o               (),
         
         // Debug Interface
-        .debug_req_i            (1'b0),
+        .debug_req_i            ( 1'b0),
         .debug_havereset_o      (),
         .debug_running_o        (),
         .debug_halted_o         (),
@@ -159,9 +189,7 @@ module soc_top
         .AxiID_WIDTH            (soc_config_pkg::AXI4_CONF_ID_WIDTH),
         /// AXI4+ATOP user width.
         .AxiUSER_WIDTH          (soc_config_pkg::AXI4_CONF_USER_WIDTH)
-    )
-    CORE_INSTR_CONTROLLER
-    (
+    ) CORE_INSTR_CONTROLLER (
         .clk_i(clk_i), .reset_i(reset_i),
         
         // Core Intsruction Interface
@@ -182,27 +210,91 @@ module soc_top
         .AxiID_WIDTH            (soc_config_pkg::AXI4_CONF_ID_WIDTH),
         /// AXI4+ATOP user width.
         .AxiUSER_WIDTH          (soc_config_pkg::AXI4_CONF_USER_WIDTH)
-    )
-    CORE_DATA_CONTROLLER
-    (
+    ) CORE_DATA_CONTROLLER (
         .clk_i(clk_i), .reset_i(reset_i),
         
-        .CORE_data_inf_i(CORE_data_intf),
+        .CORE_data_inf_i        ( CORE_data_intf                        ),
         
-        .axi_master(AXI4_Masters[AXI4_MASTER_CORE_ID]),
-        .axi_slv(AXI4_Slaves[AXI4_SLAVE_DATA_SRAM_ID])
+        .axi_master             ( AXI4_Masters[AXI4_MASTER_CORE_ID]     ),
+        .axi_slv                ( AXI4_Slaves[AXI4_SLAVE_DATA_SRAM_ID]  )
     );
+    
+    /*
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].aw_id = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].aw_addr = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].aw_len = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].aw_size = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].aw_burst = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].aw_lock = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].aw_cache = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].aw_prot = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].aw_qos = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].aw_region = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].aw_atop = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].aw_user = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].aw_valid = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].w_data = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].w_strb = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].w_last = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].w_user = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].w_valid = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].b_ready = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].ar_id = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].ar_addr = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].ar_len = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].ar_size = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].ar_burst = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].ar_lock = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].ar_cache = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].ar_prot = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].ar_qos = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].ar_region = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].ar_user = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].ar_valid = '0;
+    assign AXI4_Masters[AXI4_MASTER_CORE_ID].r_ready = '0;
+
+    assign AXI4_Slaves[AXI4_SLAVE_DATA_SRAM_ID].aw_ready = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_DATA_SRAM_ID].w_ready = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_DATA_SRAM_ID].b_id = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_DATA_SRAM_ID].b_resp = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_DATA_SRAM_ID].b_user = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_DATA_SRAM_ID].b_valid = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_DATA_SRAM_ID].ar_ready = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_DATA_SRAM_ID].r_id = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_DATA_SRAM_ID].r_data = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_DATA_SRAM_ID].r_resp = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_DATA_SRAM_ID].r_last = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_DATA_SRAM_ID].r_user = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_DATA_SRAM_ID].r_valid = '0;
+    
+    assign AXI4_Slaves[AXI4_SLAVE_INST_SRAM_ID].aw_ready = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_INST_SRAM_ID].w_ready = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_INST_SRAM_ID].b_id = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_INST_SRAM_ID].b_resp = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_INST_SRAM_ID].b_user = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_INST_SRAM_ID].b_valid = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_INST_SRAM_ID].ar_ready = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_INST_SRAM_ID].r_id = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_INST_SRAM_ID].r_data = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_INST_SRAM_ID].r_resp = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_INST_SRAM_ID].r_last = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_INST_SRAM_ID].r_user = '0;
+    assign AXI4_Slaves[AXI4_SLAVE_INST_SRAM_ID].r_valid = '0;
+    */
     
     soc_peripherals_top
     #(
-    )
-    SOC_PERIPHERALS_CONTROLLER
-    (
+        .AXI_ADDR_WIDTH     (soc_config_pkg::AXI4_CONF_ADDR_WIDTH),
+        .AXI_DATA_WIDTH     (soc_config_pkg::AXI4_CONF_DATA_WIDTH),
+        .AXI_ID_WIDTH       (soc_config_pkg::AXI4_CONF_ID_WIDTH),
+        .AXI_USER_WIDTH     (soc_config_pkg::AXI4_CONF_USER_WIDTH)
+    ) SOC_PERIPHERALS_CONTROLLER (
         .clk_i(clk_i), .reset_i(reset_i),
+        
+        .PERIPHERAL_INTF(PERIPHERAL_INTF),
         
         .AXI4_slave(AXI4_Slaves[AXI4_SLAVE_PERIPHERALS_ID])
     );
-    
     
     /// Configuration for `axi_xbar`.
     localparam axi_pkg::xbar_cfg_t SOC_SystemBus_xbar_cfg = '{
@@ -243,7 +335,7 @@ module soc_top
         /// The used ID portion to determine if a different salve is used for the same ID.
         /// See `axi_demux` for details.
         // int unsigned   AxiIdUsedSlvPorts;
-        AxiIdUsedSlvPorts:  32'd0,
+        AxiIdUsedSlvPorts:  32'd3,
         /// Are IDs unique?
         // bit            UniqueIds;
         UniqueIds:          32'd0,

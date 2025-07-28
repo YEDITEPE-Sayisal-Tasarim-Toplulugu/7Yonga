@@ -77,7 +77,7 @@ module core_data_top
     
     // Oluşturulan struct'lar ile bağlantı kabloları oluşturulur.
     // Bu kablolar adaptörün request ve response portlarına bağlanır.
-    axi_mst_req_t   axi_mst_req;
+    axi_mst_req_t   axi_mst_req, axi_mst_req2;
     axi_mst_resp_t  axi_mst_resp;
     
     // Yukarıda oluşturulan kablolar ile 
@@ -121,8 +121,8 @@ module core_data_top
       .addr_i(CORE_data_inf_i.data_addr),
       /// Address map: rule with the highest array position wins on collision
       .addr_map_i({
-          DECODER_DATA_AXI_ADDR_RULE,
-          DECODER_DATA_SRAM_ADDR_RULE
+            DECODER_DATA_SRAM_ADDR_RULE,
+            DECODER_DATA_AXI_ADDR_RULE
       }),
       /// Decoded index.
       .idx_o(DATA_interface_decoder_sel_w),
@@ -151,7 +151,7 @@ module core_data_top
         /// Data width in bit of the memory request data **and** the Axi4-Lite data channels.
         .DataWidth       ( AxiDataWidth),
         /// How many requests can be in flight at the same time. (Depth of the response mux FIFO).
-        .MaxRequests     ( 32'd1),
+        .MaxRequests     ( 32'd3),
         
         /// AXI4 request struct definition.
         .axi_req_t       ( axi_mst_req_t),
@@ -194,11 +194,33 @@ module core_data_top
         /// AXI4 master port, slave ar cache signal
         .slv_ar_cache_i('0),
         /// AXI4 master port, request output.
-        .axi_req_o(axi_mst_req),
+        .axi_req_o(axi_mst_req2),
         /// AXI4 master port, response input.
         .axi_rsp_i(axi_mst_resp)
     );
     
+    assign axi_mst_req.aw = axi_mst_req2.aw;
+    assign axi_mst_req.aw_valid = axi_mst_req2.aw_valid;
+    assign axi_mst_req.w.data = axi_mst_req2.w.data;
+    assign axi_mst_req.w.strb = axi_mst_req2.w.strb;
+    /*
+        axi_lite_to_axi modülünün içinde 52. satırda "last: 1'b1,"
+        tanımı ile sabit 1 değeri veriliyor. bu sabit bir sinyali diğer
+        modüllerde infinite combinational loop hatasına sebep olmaktadır.
+        repoya müdahele edilemediği için hata bu şekilde giderilmiştir.
+        sabit bir hata sebebi
+        sabit sıfır mantık hatası
+        bu yüzden yazma anında w_valid anında 1 diğer anlarda 0 yapılır.
+    */
+    assign axi_mst_req.w.last = '0; //axi_mst_req2.w_valid; //axi_mst_req2.w.last;
+    assign axi_mst_req.w.user = axi_mst_req2.w.user;
+    assign axi_mst_req.w_valid = axi_mst_req2.w_valid;
+    assign axi_mst_req.b_ready = axi_mst_req2.b_ready;
+    assign axi_mst_req.ar = axi_mst_req2.ar;
+    assign axi_mst_req.r_ready = axi_mst_req2.r_ready;
+    
+    // axi_to_mem_intf modulü port içindeki struct yapılarında hata vermektedir.
+    // tahminen vivado ile alakalı
     /*
     axi_to_mem_intf #(
       /// See `axi_to_mem`, parameter `AddrWidth`.
@@ -248,7 +270,7 @@ module core_data_top
       .mem_rdata_i(AXI4_ADAP_inf_w.data_rdata)
     );
     */
-    
+
     typedef logic [AxiID_WIDTH-1:0]     id_t;
     typedef logic [AxiDataWidth-1:0]   data_t;
     typedef logic [AxiDataWidth/8-1:0] strb_t;
@@ -297,7 +319,7 @@ module core_data_top
         
         .mem_req_o(AXI4_ADAP_inf_w.data_req),
         /// See `axi_to_mem`, port `mem_gnt_i`.
-        .mem_gnt_i(AXI4_ADAP_inf_w.data_gnt),
+        .mem_gnt_i('0), //AXI4_ADAP_inf_w.data_gnt),
         /// See `axi_to_mem`, port `mem_addr_o`.
         .mem_addr_o(AXI4_ADAP_inf_w.data_addr),
         /// See `axi_to_mem`, port `mem_wdata_o`.
