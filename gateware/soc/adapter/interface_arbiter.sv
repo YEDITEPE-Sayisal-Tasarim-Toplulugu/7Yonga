@@ -22,7 +22,7 @@
 module interface_arbiter
     #(parameter
             IN_COUNT = 2,
-            IN_COUNT_LOG = ((IN_COUNT%2) ? $clog2(IN_COUNT) : $clog2(IN_COUNT) + 1)
+            IN_COUNT_LOG = ((IN_COUNT%2 == 0) ? $clog2(IN_COUNT) : $clog2(IN_COUNT) + 1)
     )
     (
         input logic clk_i, reset_i,

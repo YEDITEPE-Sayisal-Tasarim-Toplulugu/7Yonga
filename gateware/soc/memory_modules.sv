@@ -149,7 +149,7 @@ module inst_rom
     (
         input logic clk_i,
     
-        CORE_INST_INF cv32_inst_inf_i
+        CORE_INST_INF.Slave cv32_inst_inf_i
     );
 
 import soc_config_pkg::*;

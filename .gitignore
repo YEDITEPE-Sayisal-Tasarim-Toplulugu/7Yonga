@@ -10,8 +10,8 @@ gateware/core_old/cv32e40p
 gateware/core/build
 gateware/core/obj_dir
 
-# axi repo:
+# repolar:
 gateware/axi4/axi
-
-# axi repo:
 gateware/pulp_common_cell/common_cells
+gateware/axi4_v2/verilog-axi
+

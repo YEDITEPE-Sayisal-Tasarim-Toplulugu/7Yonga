@@ -35,7 +35,7 @@ module soc_top
     );
     
     localparam int unsigned SYSTEM_BUS_MASTER_COUNT     = 32'd1;
-    localparam int unsigned SYSTEM_BUS_SLAVE_COUNT      = 32'd3;
+    localparam int unsigned SYSTEM_BUS_SLAVE_COUNT      = 32'd2;
     
     localparam int unsigned AXI4_MASTER_CORE_ID         = 32'd0;
     localparam int unsigned AXI4_SLAVE_INST_SRAM_ID     = 32'd0;
@@ -69,14 +69,17 @@ module soc_top
     
     assign AXI4_AddrMap[0] = {AXI4_SLAVE_INST_SRAM_ID, soc_addr_rules_pkg::INST_SRAM_ADDR_RULE.start_addr, soc_addr_rules_pkg::INST_SRAM_ADDR_RULE.end_addr};
     assign AXI4_AddrMap[1] = {AXI4_SLAVE_DATA_SRAM_ID, soc_addr_rules_pkg::DATA_SRAM_ADDR_RULE.start_addr, soc_addr_rules_pkg::DATA_SRAM_ADDR_RULE.end_addr};
-    assign AXI4_AddrMap[2] = {AXI4_SLAVE_PERIPHERALS_ID, soc_addr_rules_pkg::PERIPHERALS_TOP_ADDR_RULE.start_addr, soc_addr_rules_pkg::PERIPHERALS_TOP_ADDR_RULE.end_addr};
+    //assign AXI4_AddrMap[2] = {AXI4_SLAVE_PERIPHERALS_ID, soc_addr_rules_pkg::PERIPHERALS_TOP_ADDR_RULE.start_addr, soc_addr_rules_pkg::PERIPHERALS_TOP_ADDR_RULE.end_addr};
     
     ////////////////////////////////////////////////////////////////
-    logic core_data_intf_req_r, core_data_intf_we_r, core_data_intf_be_r, core_data_intf_gnt_r;
+    logic CORE_data_intf_data_rvalid_w, CORE_data_intf_data_gnt_w;
+    logic core_data_intf_req_r, core_data_intf_we_r, core_data_intf_gnt_r;
+    logic [3:0] core_data_intf_be_r;
     logic [soc_config_pkg::AXI4_CONF_ADDR_WIDTH-1:0] core_data_intf_addr_r;
     logic [soc_config_pkg::AXI4_CONF_DATA_WIDTH-1:0] core_data_intf_data_r;
     
-    logic core_data_intf_req_w, core_data_intf_we_w, core_data_intf_be_w, core_data_intf_gnt_w;
+    logic core_data_intf_req_w, core_data_intf_we_w, core_data_intf_gnt_w;
+    logic [3:0] core_data_intf_be_w;
     logic [soc_config_pkg::AXI4_CONF_ADDR_WIDTH-1:0] core_data_intf_addr_w;
     logic [soc_config_pkg::AXI4_CONF_DATA_WIDTH-1:0] core_data_intf_data_w;
     
@@ -96,25 +99,26 @@ module soc_top
                 core_data_intf_addr_r   <= core_data_intf_addr_w;
                 core_data_intf_data_r   <= core_data_intf_data_w;
                 core_data_intf_gnt_r    <= 1'b0;
-            end else if (CORE_data_intf.data_rvalid) begin
+            end else if (CORE_data_intf_data_rvalid_w) begin
                 core_data_intf_req_r    <= 1'b0;
             end
             
             if (core_data_intf_req_r & ~core_data_intf_gnt_r) begin
-                core_data_intf_gnt_r <= CORE_data_intf.data_gnt;
+                core_data_intf_gnt_r <= CORE_data_intf_data_gnt_w;
             end
         end
     end
     
-    always_comb begin
-        CORE_data_intf.data_req     = core_data_intf_req_r & ~core_data_intf_gnt_r;
-        CORE_data_intf.data_we      = core_data_intf_we_r;
-        CORE_data_intf.data_be      = core_data_intf_be_r;
-        CORE_data_intf.data_addr    = core_data_intf_addr_r;
-        CORE_data_intf.data_wdata   = core_data_intf_data_r;
-        
-        core_data_intf_gnt_w        = ~core_data_intf_req_r;
-    end
+    assign CORE_data_intf_data_rvalid_w = CORE_data_intf.data_rvalid;
+    assign CORE_data_intf_data_gnt_w    = CORE_data_intf.data_gnt;
+    
+    assign CORE_data_intf.data_req     = core_data_intf_req_r & ~core_data_intf_gnt_r;
+    assign CORE_data_intf.data_we      = core_data_intf_we_r;
+    assign CORE_data_intf.data_be      = core_data_intf_be_r;
+    assign CORE_data_intf.data_addr    = core_data_intf_addr_r;
+    assign CORE_data_intf.data_wdata   = core_data_intf_data_r;
+    assign core_data_intf_gnt_w        = ~core_data_intf_req_r;
+    
     ////////////////////////////////////////////////////////////////
     
     cv32e40p_top #(
@@ -282,6 +286,7 @@ module soc_top
     assign AXI4_Slaves[AXI4_SLAVE_INST_SRAM_ID].r_valid = '0;
     */
     
+    /*
     soc_peripherals_top
     #(
         .AXI_ADDR_WIDTH     (soc_config_pkg::AXI4_CONF_ADDR_WIDTH),
@@ -295,6 +300,7 @@ module soc_top
         
         .AXI4_slave(AXI4_Slaves[AXI4_SLAVE_PERIPHERALS_ID])
     );
+    */
     
     /// Configuration for `axi_xbar`.
     localparam axi_pkg::xbar_cfg_t SOC_SystemBus_xbar_cfg = '{
