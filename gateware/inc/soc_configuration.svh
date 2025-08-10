@@ -7,12 +7,12 @@
 package soc_config_pkg;
 
 // Parametrik sabitler
-parameter int USE_SOFT_MEMORY_MODULES = 1;
+parameter int USE_SOFT_MEMORY_MODULES = 0;
 parameter int USE_SOFT_ROM_MODULES = 1;
-parameter int USE_BRAM_MEMORY_MODULES = 0;
+parameter int USE_BRAM_MEMORY_MODULES = 1;
 
 // CORE
-parameter int CORE_BOOT_ADDR                = 32'h1000_0000;
+parameter int CORE_BOOT_ADDR                = 32'h0000_0000;
 parameter int CORE_MTVEC_ADDR               = CORE_BOOT_ADDR;
 parameter int CORE_DM_HALT_ADDR             = CORE_BOOT_ADDR;
 parameter int CORE_HART_ID                  = 32'd0;

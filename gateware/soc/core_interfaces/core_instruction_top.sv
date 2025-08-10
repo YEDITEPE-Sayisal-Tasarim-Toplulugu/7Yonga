@@ -45,8 +45,10 @@ module core_instruction_top
         // Core Intsruction Interface
         CORE_INST_INF.Slave CORE_inst_inf_i,
         
-        AXI_BUS.Slave slv
+        AXI_BUS.Slave axi_slv
     );
+    
+    localparam integer MEM_ADDR_WIDTH = 25;
     
     logic INST_Intf_decoder_valid_w;
     logic INST_Intf_decoder_error_w;
@@ -159,121 +161,88 @@ module core_instruction_top
         .cv32_data_inf_i(SRAM_data_inf_w)
     );
     
-    // axi_to_mem_intf modulü port içindeki struct yapılarında hata vermektedir.
-    // tahminen vivado ile alakalı
-    /*
-    axi_to_mem_intf #(
-      /// See `axi_to_mem`, parameter `AddrWidth`.
-      .ADDR_WIDTH     ( AxiAddrWidth),
-      /// See `axi_to_mem`, parameter `DataWidth`.
-      .DATA_WIDTH     ( AxiDataWidth),
-      /// AXI4+ATOP ID width.
-      .ID_WIDTH       ( AxiID_WIDTH),
-      /// AXI4+ATOP user width.
-      .USER_WIDTH     ( AxiUSER_WIDTH),
-      /// See `axi_to_mem`, parameter `NumBanks`.
-      .NUM_BANKS      ( 32'd1),
-      /// See `axi_to_mem`, parameter `BufDepth`.
-      .BUF_DEPTH      ( 32'd1),
-      /// Hide write requests if the strb == '0
-      .HIDE_STRB      ( 1'b0),
-      /// Depth of output fifo/fall_through_register. Increase for asymmetric backpressure (contention) on banks.
-      .OUT_FIFO_DEPTH ( 32'd1)
-    )
-    AXI4_ADAPTER_AXI4_TO_MEM
-    (
-      /// Clock input.
-      .clk_i(clk_i),
-      /// Asynchronous reset, active low.
-      .rst_ni(~reset_i),
-      /// See `axi_to_mem`, port `busy_o`.
-      .busy_o(),
-      /// AXI4+ATOP slave interface port.
-      .slv(slv),
-      /// See `axi_to_mem`, port `mem_req_o`.
-      .mem_req_o(AXI4_ADAP_inf_w.data_req),
-      /// See `axi_to_mem`, port `mem_gnt_i`.
-      .mem_gnt_i(AXI4_ADAP_inf_w.data_gnt),
-      /// See `axi_to_mem`, port `mem_addr_o`.
-      .mem_addr_o(AXI4_ADAP_inf_w.data_addr),
-      /// See `axi_to_mem`, port `mem_wdata_o`.
-      .mem_wdata_o(AXI4_ADAP_inf_w.data_wdata),
-      /// See `axi_to_mem`, port `mem_strb_o`.
-      .mem_strb_o(AXI4_ADAP_inf_w.data_be),
-      /// See `axi_to_mem`, port `mem_atop_o`.
-      .mem_atop_o(),
-      /// See `axi_to_mem`, port `mem_we_o`.
-      .mem_we_o(AXI4_ADAP_inf_w.data_we),
-      /// See `axi_to_mem`, port `mem_rvalid_i`.
-      .mem_rvalid_i(AXI4_ADAP_inf_w.data_rvalid),
-      /// See `axi_to_mem`, port `mem_rdata_i`.
-      .mem_rdata_i(AXI4_ADAP_inf_w.data_rdata)
-    );
-    */
-    
-    typedef logic [AxiID_WIDTH-1:0]     id_t;
-    typedef logic [AxiDataWidth-1:0]   data_t;
-    typedef logic [AxiDataWidth/8-1:0] strb_t;
-    typedef logic [AxiUSER_WIDTH-1:0]   user_t;
-    
-    `AXI_TYPEDEF_AW_CHAN_T(aw_chan_t, addr_t, id_t, user_t)
-    `AXI_TYPEDEF_W_CHAN_T(w_chan_t, data_t, strb_t, user_t)
-    `AXI_TYPEDEF_B_CHAN_T(b_chan_t, id_t, user_t)
-    `AXI_TYPEDEF_AR_CHAN_T(ar_chan_t, addr_t, id_t, user_t)
-    `AXI_TYPEDEF_R_CHAN_T(r_chan_t, data_t, id_t, user_t)
-    `AXI_TYPEDEF_REQ_T(req_t, aw_chan_t, w_chan_t, ar_chan_t)
-    `AXI_TYPEDEF_RESP_T(resp_t, b_chan_t, r_chan_t)
-    
-    req_t   req;
-    resp_t  resp;
-    
-    `AXI_ASSIGN_TO_REQ(req, slv)
-    `AXI_ASSIGN_FROM_RESP(slv, resp)
+    logic axi_mem_if_SP_i_cen, axi_mem_if_SP_i_wen;
+    logic [31:0] axi_mem_if_SP_i_data_addr;
+    logic [3:0] axi_mem_if_SP_i_data_be;
+    logic [31:0] axi_mem_if_SP_i_data_wdata;
+    // logic data_gnt;
+    // logic data_rvalid;
+    logic [31:0] axi_mem_if_SP_i_data_rdata;
 
-    axi_to_detailed_mem #(
-        .axi_req_t    ( req_t    ),
-        .axi_resp_t   ( resp_t   ),
-        .AddrWidth    ( AxiAddrWidth    ),
-        .DataWidth    ( AxiDataWidth    ),
-        .IdWidth      ( AxiID_WIDTH      ),
-        .UserWidth    ( AxiUSER_WIDTH    ),
-        .NumBanks     ( 32'd1     ),
-        .BufDepth     ( 32'd1     ),
-        .HideStrb     (  1'd0     ),
-        .OutFifoDepth ( 32'd1 )
-    ) i_axi_to_detailed_mem (
-        .clk_i(clk_i),
-        .rst_ni(~reset_i),
-        .busy_o(),
-        .axi_req_i    ( req     ),
-        .axi_resp_o   ( resp    ),
-        .mem_lock_o   (),
-        .mem_id_o     (),
-        .mem_user_o   (),
-        .mem_cache_o  (),
-        .mem_prot_o   (),
-        .mem_qos_o    (),
-        .mem_region_o (),
-        .mem_err_i    ('0),
-        .mem_exokay_i ('0),
+    assign AXI4_ADAP_inf_w.data_req     = ~axi_mem_if_SP_i_cen;
+    assign AXI4_ADAP_inf_w.data_we      = ~axi_mem_if_SP_i_wen;
+    assign AXI4_ADAP_inf_w.data_addr    = axi_mem_if_SP_i_data_addr;
+    assign AXI4_ADAP_inf_w.data_be      = axi_mem_if_SP_i_data_be;
+    assign AXI4_ADAP_inf_w.data_wdata   = axi_mem_if_SP_i_data_wdata;
+    assign axi_mem_if_SP_i_data_rdata   = AXI4_ADAP_inf_w.data_rdata;
+    
+    axi_mem_if_SP #(
+        .AXI4_ADDRESS_WIDTH ( AxiAddrWidth                      ),
+        .AXI4_RDATA_WIDTH   ( AxiDataWidth                      ),
+        .AXI4_WDATA_WIDTH   ( AxiDataWidth                      ),
+        .AXI4_ID_WIDTH      ( AxiID_WIDTH                       ),
+        .AXI4_USER_WIDTH    ( AxiUSER_WIDTH                     ),
+        .MEM_ADDR_WIDTH     ( MEM_ADDR_WIDTH                    )
+    ) axi_mem_if_SP_i (
+        .ACLK               ( clk_i                             ),
+        .ARESETn            ( ~reset_i                          ),
+        .test_en_i          ( 1'b0                              ),
         
-        .mem_req_o(AXI4_ADAP_inf_w.data_req),
-        /// See `axi_to_mem`, port `mem_gnt_i`.
-        .mem_gnt_i(AXI4_ADAP_inf_w.data_gnt),
-        /// See `axi_to_mem`, port `mem_addr_o`.
-        .mem_addr_o(AXI4_ADAP_inf_w.data_addr),
-        /// See `axi_to_mem`, port `mem_wdata_o`.
-        .mem_wdata_o(AXI4_ADAP_inf_w.data_wdata),
-        /// See `axi_to_mem`, port `mem_strb_o`.
-        .mem_strb_o(AXI4_ADAP_inf_w.data_be),
-        /// See `axi_to_mem`, port `mem_atop_o`.
-        .mem_atop_o(),
-        /// See `axi_to_mem`, port `mem_we_o`.
-        .mem_we_o(AXI4_ADAP_inf_w.data_we),
-        /// See `axi_to_mem`, port `mem_rvalid_i`.
-        .mem_rvalid_i(AXI4_ADAP_inf_w.data_rvalid),
-        /// See `axi_to_mem`, port `mem_rdata_i`.
-        .mem_rdata_i(AXI4_ADAP_inf_w.data_rdata)
+        .AWID_i             ( axi_slv.aw_id                     ),
+        .AWADDR_i           ( axi_slv.aw_addr                   ),
+        .AWLEN_i            ( axi_slv.aw_len                    ),
+        .AWSIZE_i           ( axi_slv.aw_size                   ),
+        .AWBURST_i          ( axi_slv.aw_burst                  ),
+        .AWLOCK_i           ( axi_slv.aw_lock                   ),
+        .AWCACHE_i          ( axi_slv.aw_cache                  ),
+        .AWPROT_i           ( axi_slv.aw_prot                   ),
+        .AWREGION_i         ( axi_slv.aw_region                 ),
+        .AWUSER_i           ( axi_slv.aw_user                   ),
+        .AWQOS_i            ( axi_slv.aw_qos                    ),
+        .AWVALID_i          ( axi_slv.aw_valid                  ),
+        .AWREADY_o          ( axi_slv.aw_ready                  ),
+        
+        .WDATA_i            ( axi_slv.w_data                    ),
+        .WSTRB_i            ( axi_slv.w_strb                    ),
+        .WLAST_i            ( axi_slv.w_last                    ),
+        .WUSER_i            ( axi_slv.w_user                    ),
+        .WVALID_i           ( axi_slv.w_valid                   ),
+        .WREADY_o           ( axi_slv.w_ready                   ),
+        
+        .BID_o              ( axi_slv.b_id                      ),
+        .BRESP_o            ( axi_slv.b_resp                    ),
+        .BVALID_o           ( axi_slv.b_valid                   ),
+        .BUSER_o            ( axi_slv.b_user                    ),
+        .BREADY_i           ( axi_slv.b_ready                   ),
+        
+        .ARID_i             ( axi_slv.ar_id                     ),
+        .ARADDR_i           ( axi_slv.ar_addr                   ),
+        .ARLEN_i            ( axi_slv.ar_len                    ),
+        .ARSIZE_i           ( axi_slv.ar_size                   ),
+        .ARBURST_i          ( axi_slv.ar_burst                  ),
+        .ARLOCK_i           ( axi_slv.ar_lock                   ),
+        .ARCACHE_i          ( axi_slv.ar_cache                  ),
+        .ARPROT_i           ( axi_slv.ar_prot                   ),
+        .ARREGION_i         ( axi_slv.ar_region                 ),
+        .ARUSER_i           ( axi_slv.ar_user                   ),
+        .ARQOS_i            ( axi_slv.ar_qos                    ),
+        .ARVALID_i          ( axi_slv.ar_valid                  ),
+        .ARREADY_o          ( axi_slv.ar_ready                  ),
+        
+        .RID_o              ( axi_slv.r_id                      ),
+        .RDATA_o            ( axi_slv.r_data                    ),
+        .RRESP_o            ( axi_slv.r_resp                    ),
+        .RLAST_o            ( axi_slv.r_last                    ),
+        .RUSER_o            ( axi_slv.r_user                    ),
+        .RVALID_o           ( axi_slv.r_valid                   ),
+        .RREADY_i           ( axi_slv.r_ready                   ),
+        
+        .CEN_o              ( axi_mem_if_SP_i_cen               ),
+        .WEN_o              ( axi_mem_if_SP_i_wen               ),
+        .A_o                ( axi_mem_if_SP_i_data_addr         ),
+        .D_o                ( axi_mem_if_SP_i_data_wdata        ),
+        .BE_o               ( axi_mem_if_SP_i_data_be           ),
+        .Q_i                ( axi_mem_if_SP_i_data_rdata        )
     );
     
     // Interface Decoder Part

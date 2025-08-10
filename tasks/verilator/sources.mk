@@ -1,5 +1,6 @@
 CORE_DIR			:= $(BASE_DIR)/gateware/core/cv32e40p/rtl
 AXI_DIR				:= $(BASE_DIR)/gateware/axi4/axi/src
+CORE2AXI_DIR		:= $(BASE_DIR)/gateware/core2axi/core2axi/rtl
 COMMON_DIR			:= $(BASE_DIR)/gateware/pulp_common_cell/common_cells/src
 PERIPHERALS_DIR		:= $(BASE_DIR)/gateware/peripherals
 SOC_DIR				:= $(BASE_DIR)/gateware/soc
@@ -39,6 +40,7 @@ SV_FILES 			+= $(wildcard $(AXI_DIR)/axi_to_axi_lite.sv)
 SV_FILES 			+= $(wildcard $(AXI_DIR)/axi_to_detailed_mem.sv)
 SV_FILES 			+= $(wildcard $(AXI_DIR)/axi_xbar.sv)
 SV_FILES 			+= $(wildcard $(AXI_DIR)/axi_xbar_unmuxed.sv)
+SV_FILES 			+= $(wildcard $(CORE2AXI_DIR)/core2axi.sv)
 SV_FILES 			+= $(wildcard $(SOC_DIR)/core_interfaces/core_data_top.sv)
 SV_FILES 			+= $(wildcard $(SOC_DIR)/core_interfaces/core_instruction_top.sv)
 SV_FILES 			+= $(wildcard $(COMMON_DIR)/counter.sv)
