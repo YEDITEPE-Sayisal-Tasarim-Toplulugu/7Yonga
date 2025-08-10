@@ -32,6 +32,11 @@ serimi
   <img src="tasarımlar/görseller/YONGA-TASARIM-TOP_v3.0.drawio.png" alt="Mikrodentleyici Tasarımı" width="500"/>
 </div>
 
+## Memory Map
+<div style="background-color: white; display: inline-block; padding: 0px; border-radius: 8px; box-shadow: 0 0 0px rgba(0,0,0,0.1);">
+  <img src="tasarımlar/görseller/YONGA-TASARIM-ADDR_MEMORY_MAP.drawio.png" alt="Mikrodentleyici Tasarımı" width="500"/>
+</div>
+
 ## İş Planı
 ![İş Planı](tasarımlar/görseller/isPlani.jpg)
 
