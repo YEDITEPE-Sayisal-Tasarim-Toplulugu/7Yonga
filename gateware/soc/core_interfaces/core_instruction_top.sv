@@ -68,13 +68,13 @@ module core_instruction_top
     } _addr_rule_t;
     
     _addr_rule_t DECODER_ROM_ADDR_RULE = {
-        32'd0,
+        32'd1,
         soc_addr_rules_pkg::ROM_ADDR_RULE.start_addr,
         soc_addr_rules_pkg::ROM_ADDR_RULE.end_addr
     };
     
     _addr_rule_t DECODER_INST_SRAM_ADDR_RULE = {
-        32'd1,
+        32'd0,
         soc_addr_rules_pkg::INST_SRAM_ADDR_RULE.start_addr,
         soc_addr_rules_pkg::INST_SRAM_ADDR_RULE.end_addr
     };
@@ -97,8 +97,8 @@ module core_instruction_top
       .addr_i(CORE_inst_inf_i.instr_addr),
       /// Address map: rule with the highest array position wins on collision
       .addr_map_i({
-      DECODER_ROM_ADDR_RULE,
-      DECODER_INST_SRAM_ADDR_RULE
+      DECODER_INST_SRAM_ADDR_RULE,
+      DECODER_ROM_ADDR_RULE
       }),
       /// Decoded index.
       .idx_o(INST_Intf_decoder_sel_w),
@@ -159,6 +159,8 @@ module core_instruction_top
         .cv32_data_inf_i(SRAM_data_inf_w)
     );
     
+    // axi_to_mem_intf modulü port içindeki struct yapılarında hata vermektedir.
+    // tahminen vivado ile alakalı
     /*
     axi_to_mem_intf #(
       /// See `axi_to_mem`, parameter `AddrWidth`.
@@ -275,65 +277,34 @@ module core_instruction_top
     );
     
     // Interface Decoder Part
-    always_comb begin
-        ROM_inst_inf_w.instr_addr = CORE_inst_inf_i.instr_addr;
-        DECODER_port2_inf_w.instr_addr = CORE_inst_inf_i.instr_addr;
-        
-        if (INST_Intf_decoder_sel_w) begin
-            CORE_inst_inf_i.instr_gnt     = ROM_inst_inf_w.instr_gnt;
-            CORE_inst_inf_i.instr_rvalid  = ROM_inst_inf_w.instr_rvalid;
-            CORE_inst_inf_i.instr_rdata   = ROM_inst_inf_w.instr_rdata;
-        end else begin
-            CORE_inst_inf_i.instr_gnt     = DECODER_port2_inf_w.instr_gnt;
-            CORE_inst_inf_i.instr_rvalid  = DECODER_port2_inf_w.instr_rvalid;
-            CORE_inst_inf_i.instr_rdata   = DECODER_port2_inf_w.instr_rdata;
-        end
-        
-        if (INST_Intf_decoder_sel_w) begin
-            ROM_inst_inf_w.instr_req = CORE_inst_inf_i.instr_req;
-            DECODER_port2_inf_w.instr_req = 0;
-        end else begin
-            ROM_inst_inf_w.instr_req = 0;
-            DECODER_port2_inf_w.instr_req = CORE_inst_inf_i.instr_req;
-        end
-    end
+    assign ROM_inst_inf_w.instr_addr        = CORE_inst_inf_i.instr_addr;
+    assign DECODER_port2_inf_w.instr_addr   = CORE_inst_inf_i.instr_addr;
+    
+    assign CORE_inst_inf_i.instr_gnt        = (INST_Intf_decoder_sel_w) ? ROM_inst_inf_w.instr_gnt      : DECODER_port2_inf_w.instr_gnt;   
+    assign CORE_inst_inf_i.instr_rvalid     = (INST_Intf_decoder_sel_w) ? ROM_inst_inf_w.instr_rvalid   : DECODER_port2_inf_w.instr_rvalid;
+    assign CORE_inst_inf_i.instr_rdata      = (INST_Intf_decoder_sel_w) ? ROM_inst_inf_w.instr_rdata    : DECODER_port2_inf_w.instr_rdata; 
+    
+    assign ROM_inst_inf_w.instr_req         = (INST_Intf_decoder_sel_w) ? CORE_inst_inf_i.instr_req : 0;
+    assign DECODER_port2_inf_w.instr_req    = (INST_Intf_decoder_sel_w) ? 0 : CORE_inst_inf_i.instr_req;
     
     // Interface Arbiter Part
-    always_comb begin
-        INST_Intf_arbiter_valid_list_w[0] = INF_CVT_inf_w.data_req;
-        INST_Intf_arbiter_valid_list_w[1] = AXI4_ADAP_inf_w.data_req;
-        
-        AXI4_ADAP_inf_w.data_rdata = SRAM_data_inf_w.data_rdata;
-        INF_CVT_inf_w.data_rdata = SRAM_data_inf_w.data_rdata;
-        
-        if (INST_Intf_arbiter_sel_w) begin
-            SRAM_data_inf_w.data_addr   = AXI4_ADAP_inf_w.data_addr;
-            SRAM_data_inf_w.data_req    = AXI4_ADAP_inf_w.data_req;
-            SRAM_data_inf_w.data_we     = AXI4_ADAP_inf_w.data_we;
-            SRAM_data_inf_w.data_be     = AXI4_ADAP_inf_w.data_be;
-            SRAM_data_inf_w.data_wdata  = AXI4_ADAP_inf_w.data_wdata;
-        end else begin
-            SRAM_data_inf_w.data_addr   = INF_CVT_inf_w.data_addr;
-            SRAM_data_inf_w.data_req    = INF_CVT_inf_w.data_req;
-            SRAM_data_inf_w.data_we     = INF_CVT_inf_w.data_we;
-            SRAM_data_inf_w.data_be     = INF_CVT_inf_w.data_be;
-            SRAM_data_inf_w.data_wdata  = INF_CVT_inf_w.data_wdata;
-        end
-        
-        if (INST_Intf_arbiter_sel_w) begin
-            AXI4_ADAP_inf_w.data_gnt = SRAM_data_inf_w.data_gnt;
-            AXI4_ADAP_inf_w.data_rvalid = SRAM_data_inf_w.data_rvalid;
-            
-            INF_CVT_inf_w.data_gnt = 0;
-            INF_CVT_inf_w.data_rvalid = 0;
-        end else begin
-            AXI4_ADAP_inf_w.data_gnt = 0;
-            AXI4_ADAP_inf_w.data_rvalid = 0;
-            
-            INF_CVT_inf_w.data_gnt = SRAM_data_inf_w.data_gnt;
-            INF_CVT_inf_w.data_rvalid = SRAM_data_inf_w.data_rvalid;
-        end
-    end
+    assign INST_Intf_arbiter_valid_list_w[0] = INF_CVT_inf_w.data_req;
+    assign INST_Intf_arbiter_valid_list_w[1] = AXI4_ADAP_inf_w.data_req;
+    
+    assign AXI4_ADAP_inf_w.data_rdata   = SRAM_data_inf_w.data_rdata;
+    assign INF_CVT_inf_w.data_rdata     = SRAM_data_inf_w.data_rdata;
+    
+    assign SRAM_data_inf_w.data_addr    = (INST_Intf_arbiter_sel_w) ? AXI4_ADAP_inf_w.data_addr     : INF_CVT_inf_w.data_addr; 
+    assign SRAM_data_inf_w.data_req     = (INST_Intf_arbiter_sel_w) ? AXI4_ADAP_inf_w.data_req      : INF_CVT_inf_w.data_req;  
+    assign SRAM_data_inf_w.data_we      = (INST_Intf_arbiter_sel_w) ? AXI4_ADAP_inf_w.data_we       : INF_CVT_inf_w.data_we;   
+    assign SRAM_data_inf_w.data_be      = (INST_Intf_arbiter_sel_w) ? AXI4_ADAP_inf_w.data_be       : INF_CVT_inf_w.data_be;   
+    assign SRAM_data_inf_w.data_wdata   = (INST_Intf_arbiter_sel_w) ? AXI4_ADAP_inf_w.data_wdata    : INF_CVT_inf_w.data_wdata;
+    
+    assign AXI4_ADAP_inf_w.data_gnt     = (INST_Intf_arbiter_sel_w) ? SRAM_data_inf_w.data_gnt      : 0;
+    assign AXI4_ADAP_inf_w.data_rvalid  = (INST_Intf_arbiter_sel_w) ? SRAM_data_inf_w.data_rvalid   : 0;
+    
+    assign INF_CVT_inf_w.data_gnt       = (INST_Intf_arbiter_sel_w) ? 0 : SRAM_data_inf_w.data_gnt;
+    assign INF_CVT_inf_w.data_rvalid    = (INST_Intf_arbiter_sel_w) ? 0 : SRAM_data_inf_w.data_rvalid;
     
     ////////////////////////////////////////////////////////////////////////////////////
     //                                   ASSERTIONS                                   //

@@ -2,20 +2,24 @@ ENTRY(_start)
 
 MEMORY
 {
-  /* Define the memory regions */
-  ram (rwx) : ORIGIN = 0x30000000, LENGTH = 1K
+  /* Define memory regions according to addr_rule_t */
+  rom (rx)  : ORIGIN = 0x10000000, LENGTH = 1K    /* 0x1000_0000 - 0x1000_0400 */
+  ram (rwx) : ORIGIN = 0x30000000, LENGTH = 8K    /* 0x3000_0000 - 0x3000_2000 */
 }
 
 SECTIONS
 {
-  /* Define the sections of the output file */
+  /* Instruction memory section (.text) goes into ROM */
   .text : {
     *(.text)
-  } > ram
+  } > rom
 
+  /* Data memory section (.data) goes into RAM */
   .data : {
     *(.data)
   } > ram
+
+  /* Stack and heap (optional, if needed) */
 
   . = ALIGN(4);
   _end = . ;

@@ -22,7 +22,7 @@
 module interface_arbiter
     #(parameter
             IN_COUNT = 2,
-            IN_COUNT_LOG = ((IN_COUNT%2) ? $clog2(IN_COUNT) : $clog2(IN_COUNT) + 1)
+            IN_COUNT_LOG = ((IN_COUNT%2 == 0) ? $clog2(IN_COUNT) : $clog2(IN_COUNT) + 1)
     )
     (
         input logic clk_i, reset_i,
@@ -57,7 +57,7 @@ module interface_arbiter
         end
         
         found_w = 1'b0;
-        sel_w = 'dx;
+        sel_w = 'd0;
         for (integer i=0; i<IN_COUNT; i++) begin
             if (search_list_w[i]) begin
                 found_w = 1'b1;

@@ -4,6 +4,7 @@ REM Yeditepe Üniversitesi, Sayısal Tasarım Topluluğu
 REM 06.2025
 
 SET OUT_DIR=%cd%\OUT
+SET VIVADO_DIR=D:\Programlar\VIVADOLIC\Vivado\2024.1
 
 if not exist %OUT_DIR% (
     mkdir %OUT_DIR%
@@ -12,7 +13,7 @@ if not exist %OUT_DIR% (
 REM Batch script for generating file list and running Vivado in batch mode
 
 REM Ortam değişkenlerini ayarla (Vivado için)
-call "D:\Programlar\VIVADOLIC\Vivado\2024.1\settings64.bat"
+call "%VIVADO_DIR%\settings64.bat"
 
 REM Geçerli dizini kaydet
 set CURRENT_DIR=%~dp0

@@ -38,10 +38,9 @@ module soc_peripherals_top
     (
         input logic clk_i, reset_i,
         
-        input logic UART0_rx_i,
-        output logic UART0_tx_o,
+        SOC_PERIPHERAL_INF.Slave    PERIPHERAL_INTF,
         
-        AXI_BUS.Slave              AXI4_slave
+        AXI_BUS.Slave               AXI4_slave
     );
     
     typedef logic [AXI_ADDR_WIDTH-1:0]      addr_t;
@@ -109,8 +108,8 @@ module soc_peripherals_top
         .s_axi_rready   (AXI4L_Slaves[AXI4L_SLAVE_UART_ID].r_ready  ),
         
         // UART pins
-        .uart_rx        (UART0_rx_i),
-        .uart_tx        (UART0_tx_o)
+        .uart_rx        (PERIPHERAL_INTF.UART0_rx),
+        .uart_tx        (PERIPHERAL_INTF.UART0_tx)
     );
     
     /// Configuration for `axi_xbar`.

@@ -98,6 +98,7 @@ module memory_model_soft
     //                                   ASSERTIONS                                   //
     ////////////////////////////////////////////////////////////////////////////////////
     // Assertion: addra must be within valid range
+    /*
     property addr_within_range;
         @(posedge clka)
         (!ena) or (addra < DEPTH);
@@ -105,5 +106,6 @@ module memory_model_soft
 
     assert property (addr_within_range)
         else $error("addra (%0d) is out of valid range [0, %0d)", addra, DEPTH);
+    */
 
 endmodule

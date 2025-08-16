@@ -64,6 +64,95 @@ interface CORE_DATA_INF #();
 
 endinterface
 
+interface SOC_PERIPHERAL_INF #();
+  logic UART0_rx;
+  logic UART0_tx;
+
+  modport Master (
+    output UART0_rx,
+    input UART0_tx
+  );
+
+  modport Slave (
+    output UART0_tx,
+    input UART0_rx
+  );
+
+endinterface
+/*
+interface AXI_BUS #();
+  logic [S_COUNT*S_ID_WIDTH-1:0]    awid;
+  logic [S_COUNT*ADDR_WIDTH-1:0]    awaddr;
+  logic [S_COUNT*8-1:0]             awlen;
+  logic [S_COUNT*3-1:0]             awsize;
+  logic [S_COUNT*2-1:0]             awburst;
+  logic [S_COUNT-1:0]               awlock;
+  logic [S_COUNT*4-1:0]             awcache;
+  logic [S_COUNT*3-1:0]             awprot;
+  logic [S_COUNT*4-1:0]             awqos;
+  logic [S_COUNT*AWUSER_WIDTH-1:0]  awuser;
+  logic [S_COUNT-1:0]               awvalid;
+  logic [S_COUNT-1:0]               awready;
+  logic [S_COUNT*DATA_WIDTH-1:0]    wdata;
+  logic [S_COUNT*STRB_WIDTH-1:0]    wstrb;
+  logic [S_COUNT-1:0]               wlast;
+  logic [S_COUNT*WUSER_WIDTH-1:0]   wuser;
+  logic [S_COUNT-1:0]               wvalid;
+  logic [S_COUNT-1:0]               wready;
+  logic [S_COUNT*S_ID_WIDTH-1:0]    bid;
+  logic [S_COUNT*2-1:0]             bresp;
+  logic [S_COUNT*BUSER_WIDTH-1:0]   buser;
+  logic [S_COUNT-1:0]               bvalid;
+  logic [S_COUNT-1:0]               bready;
+  logic [S_COUNT*S_ID_WIDTH-1:0]    arid;
+  logic [S_COUNT*ADDR_WIDTH-1:0]    araddr;
+  logic [S_COUNT*8-1:0]             arlen;
+  logic [S_COUNT*3-1:0]             arsize;
+  logic [S_COUNT*2-1:0]             arburst;
+  logic [S_COUNT-1:0]               arlock;
+  logic [S_COUNT*4-1:0]             arcache;
+  logic [S_COUNT*3-1:0]             arprot;
+  logic [S_COUNT*4-1:0]             arqos;
+  logic [S_COUNT*ARUSER_WIDTH-1:0]  aruser;
+  logic [S_COUNT-1:0]               arvalid;
+  logic [S_COUNT-1:0]               arready;
+  logic [S_COUNT*S_ID_WIDTH-1:0]    rid;
+  logic [S_COUNT*DATA_WIDTH-1:0]    rdata;
+  logic [S_COUNT*2-1:0]             rresp;
+  logic [S_COUNT-1:0]               rlast;
+  logic [S_COUNT*RUSER_WIDTH-1:0]   ruser;
+  logic [S_COUNT-1:0]               rvalid;
+  logic [S_COUNT-1:0]               rready;
+
+  modport Master (
+    output awid, awaddr, awlen, awsize, awburst, awlock, awcache, awprot, awqos, awuser, awvalid,
+    input awready,
+    output wdata, wstrb, wlast, wuser, wvalid,
+    input wready,
+    input bid, bresp, buser, bvalid,
+    output bready,
+    output arid, araddr, arlen, arsize, arburst, arlock, arcache, arprot, arqos, aruser, arvalid,
+    input arready,
+    input rid, rdata, rresp, rlast, ruser, rvalid,
+    output rready,
+  );
+
+  modport Slave (
+    input awid, awaddr, awlen, awsize, awburst, awlock, awcache, awprot, awqos, awuser, awvalid,
+    output awready,
+    input wdata, wstrb, wlast, wuser, wvalid,
+    output wready,
+    output bid, bresp, buser, bvalid,
+    input bready,
+    input arid, araddr, arlen, arsize, arburst, arlock, arcache, arprot, arqos, aruser, arvalid,
+    output arready,
+    output rid, rdata, rresp, rlast, ruser, rvalid,
+    input rready,
+  );
+
+endinterface
+*/
+
 `endif //__SOC_INTERFACE_LIST_SVH__
 
 

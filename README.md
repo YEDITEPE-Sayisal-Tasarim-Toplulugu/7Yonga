@@ -62,12 +62,14 @@ serimi
 │   └── step0/              # Verification için kullanılan en basit test template'i
 |
 ├── tasks/                  # Teknofest 2025 gerçekleştirilmesi gereken görevleri içerir
+│   └── boot_steps/         # Boot süreci için gerekli donanım blokları ve betikleri bulunur.
 │   └── core_verification/  # Çekirdek Doğrulaması Test Ortamı
 │     └── testprogram/      # Test için kullanılan programları içerir
 │     └── testsuit/         # Top modülü, Çekirdek için sarıcı modülü ve log üretici modülü içerir
 │   └── LDPC/               # LDPC çalışma klasörü
 │     └── articles/         # LDPC ile ilgli referans kaynaklar
 │     └── pdfs/             # LPDC çalışma çıktıları
+│   └── Verif/              # Verification ilgili dosyaları
 |
 ├── gateware/               # HDL kodları
 │   └── axi4/               # AXI4 Klasörü

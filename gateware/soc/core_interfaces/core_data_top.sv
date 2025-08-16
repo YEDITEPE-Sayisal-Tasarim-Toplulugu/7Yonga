@@ -77,7 +77,7 @@ module core_data_top
     
     // Oluşturulan struct'lar ile bağlantı kabloları oluşturulur.
     // Bu kablolar adaptörün request ve response portlarına bağlanır.
-    axi_mst_req_t   axi_mst_req;
+    axi_mst_req_t   axi_mst_req, axi_mst_req2;
     axi_mst_resp_t  axi_mst_resp;
     
     // Yukarıda oluşturulan kablolar ile 
@@ -121,8 +121,8 @@ module core_data_top
       .addr_i(CORE_data_inf_i.data_addr),
       /// Address map: rule with the highest array position wins on collision
       .addr_map_i({
-          DECODER_DATA_AXI_ADDR_RULE,
-          DECODER_DATA_SRAM_ADDR_RULE
+            DECODER_DATA_SRAM_ADDR_RULE,
+            DECODER_DATA_AXI_ADDR_RULE
       }),
       /// Decoded index.
       .idx_o(DATA_interface_decoder_sel_w),
@@ -151,7 +151,7 @@ module core_data_top
         /// Data width in bit of the memory request data **and** the Axi4-Lite data channels.
         .DataWidth       ( AxiDataWidth),
         /// How many requests can be in flight at the same time. (Depth of the response mux FIFO).
-        .MaxRequests     ( 32'd1),
+        .MaxRequests     ( 32'd3),
         
         /// AXI4 request struct definition.
         .axi_req_t       ( axi_mst_req_t),
@@ -194,11 +194,33 @@ module core_data_top
         /// AXI4 master port, slave ar cache signal
         .slv_ar_cache_i('0),
         /// AXI4 master port, request output.
-        .axi_req_o(axi_mst_req),
+        .axi_req_o(axi_mst_req2),
         /// AXI4 master port, response input.
         .axi_rsp_i(axi_mst_resp)
     );
     
+    assign axi_mst_req.aw = axi_mst_req2.aw;
+    assign axi_mst_req.aw_valid = axi_mst_req2.aw_valid;
+    assign axi_mst_req.w.data = axi_mst_req2.w.data;
+    assign axi_mst_req.w.strb = axi_mst_req2.w.strb;
+    /*
+        axi_lite_to_axi modülünün içinde 52. satırda "last: 1'b1,"
+        tanımı ile sabit 1 değeri veriliyor. bu sabit bir sinyali diğer
+        modüllerde infinite combinational loop hatasına sebep olmaktadır.
+        repoya müdahele edilemediği için hata bu şekilde giderilmiştir.
+        sabit bir hata sebebi
+        sabit sıfır mantık hatası
+        bu yüzden yazma anında w_valid anında 1 diğer anlarda 0 yapılır.
+    */
+    assign axi_mst_req.w.last = axi_mst_req2.w.last;
+    assign axi_mst_req.w.user = axi_mst_req2.w.user;
+    assign axi_mst_req.w_valid = axi_mst_req2.w_valid;
+    assign axi_mst_req.b_ready = axi_mst_req2.b_ready;
+    assign axi_mst_req.ar = axi_mst_req2.ar;
+    assign axi_mst_req.r_ready = axi_mst_req2.r_ready;
+    
+    // axi_to_mem_intf modulü port içindeki struct yapılarında hata vermektedir.
+    // tahminen vivado ile alakalı
     /*
     axi_to_mem_intf #(
       /// See `axi_to_mem`, parameter `AddrWidth`.
@@ -248,7 +270,7 @@ module core_data_top
       .mem_rdata_i(AXI4_ADAP_inf_w.data_rdata)
     );
     */
-    
+
     typedef logic [AxiID_WIDTH-1:0]     id_t;
     typedef logic [AxiDataWidth-1:0]   data_t;
     typedef logic [AxiDataWidth/8-1:0] strb_t;
@@ -297,7 +319,7 @@ module core_data_top
         
         .mem_req_o(AXI4_ADAP_inf_w.data_req),
         /// See `axi_to_mem`, port `mem_gnt_i`.
-        .mem_gnt_i(AXI4_ADAP_inf_w.data_gnt),
+        .mem_gnt_i('0), //AXI4_ADAP_inf_w.data_gnt),
         /// See `axi_to_mem`, port `mem_addr_o`.
         .mem_addr_o(AXI4_ADAP_inf_w.data_addr),
         /// See `axi_to_mem`, port `mem_wdata_o`.
@@ -337,72 +359,41 @@ module core_data_top
     );
     
     // DATA Decoder Part
-    always_comb begin
-        DECODER_port1_inf_w.data_addr = CORE_data_inf_i.data_addr;
-        DECODER_port1_inf_w.data_we = CORE_data_inf_i.data_we;
-        DECODER_port1_inf_w.data_be = CORE_data_inf_i.data_be;
-        DECODER_port1_inf_w.data_wdata = CORE_data_inf_i.data_wdata;
-        
-        DECODER_port2_inf_w.data_addr = CORE_data_inf_i.data_addr;
-        DECODER_port2_inf_w.data_we = CORE_data_inf_i.data_we;
-        DECODER_port2_inf_w.data_be = CORE_data_inf_i.data_be;
-        DECODER_port2_inf_w.data_wdata = CORE_data_inf_i.data_wdata;
-        
-        if (DATA_interface_decoder_sel_w) begin
-            CORE_data_inf_i.data_gnt = DECODER_port1_inf_w.data_gnt;
-            CORE_data_inf_i.data_rvalid = DECODER_port1_inf_w.data_rvalid;
-            CORE_data_inf_i.data_rdata = DECODER_port1_inf_w.data_rdata;
-        end else begin
-            CORE_data_inf_i.data_gnt = DECODER_port2_inf_w.data_gnt;
-            CORE_data_inf_i.data_rvalid = DECODER_port2_inf_w.data_rvalid;
-            CORE_data_inf_i.data_rdata = DECODER_port2_inf_w.data_rdata;
-        end
-        
-        if (DATA_interface_decoder_sel_w) begin
-            DECODER_port1_inf_w.data_req = CORE_data_inf_i.data_req;
-            DECODER_port2_inf_w.data_req = 0;
-        end else begin
-            DECODER_port1_inf_w.data_req = 0;
-            DECODER_port2_inf_w.data_req = CORE_data_inf_i.data_req;
-        end
-    end
+    assign DECODER_port1_inf_w.data_addr    = CORE_data_inf_i.data_addr;
+    assign DECODER_port1_inf_w.data_we      = CORE_data_inf_i.data_we;
+    assign DECODER_port1_inf_w.data_be      = CORE_data_inf_i.data_be;
+    assign DECODER_port1_inf_w.data_wdata   = CORE_data_inf_i.data_wdata;
+    
+    assign DECODER_port2_inf_w.data_addr    = CORE_data_inf_i.data_addr;
+    assign DECODER_port2_inf_w.data_we      = CORE_data_inf_i.data_we;
+    assign DECODER_port2_inf_w.data_be      = CORE_data_inf_i.data_be;
+    assign DECODER_port2_inf_w.data_wdata   = CORE_data_inf_i.data_wdata;
+    
+    assign CORE_data_inf_i.data_gnt         = (DATA_interface_decoder_sel_w) ? DECODER_port1_inf_w.data_gnt     : DECODER_port2_inf_w.data_gnt;   
+    assign CORE_data_inf_i.data_rvalid      = (DATA_interface_decoder_sel_w) ? DECODER_port1_inf_w.data_rvalid  : DECODER_port2_inf_w.data_rvalid;
+    assign CORE_data_inf_i.data_rdata       = (DATA_interface_decoder_sel_w) ? DECODER_port1_inf_w.data_rdata   : DECODER_port2_inf_w.data_rdata; 
+    
+    assign DECODER_port1_inf_w.data_req     = (DATA_interface_decoder_sel_w) ? CORE_data_inf_i.data_req : 0;
+    assign DECODER_port2_inf_w.data_req     = (DATA_interface_decoder_sel_w) ? 0 : CORE_data_inf_i.data_req;
     
     // Interface Arbiter Part
-    always_comb begin
-        DATA_inf_arbiter_valid_list_w[0] = DECODER_port1_inf_w.data_req;
-        DATA_inf_arbiter_valid_list_w[1] = AXI4_ADAP_inf_w.data_req;
-        
-        DECODER_port1_inf_w.data_rdata = SRAM_data_inf_w.data_rdata;
-        AXI4_ADAP_inf_w.data_rdata = SRAM_data_inf_w.data_rdata;
-        
-        if (DATA_inf_arbiter_sel_w) begin
-            SRAM_data_inf_w.data_addr   = AXI4_ADAP_inf_w.data_addr;
-            SRAM_data_inf_w.data_req    = AXI4_ADAP_inf_w.data_req;
-            SRAM_data_inf_w.data_we     = AXI4_ADAP_inf_w.data_we;
-            SRAM_data_inf_w.data_be     = AXI4_ADAP_inf_w.data_be;
-            SRAM_data_inf_w.data_wdata  = AXI4_ADAP_inf_w.data_wdata;
-        end else begin
-            SRAM_data_inf_w.data_addr   = DECODER_port1_inf_w.data_addr;
-            SRAM_data_inf_w.data_req    = DECODER_port1_inf_w.data_req;
-            SRAM_data_inf_w.data_we     = DECODER_port1_inf_w.data_we;
-            SRAM_data_inf_w.data_be     = DECODER_port1_inf_w.data_be;
-            SRAM_data_inf_w.data_wdata  = DECODER_port1_inf_w.data_wdata;
-        end
-        
-        if (DATA_inf_arbiter_sel_w) begin
-            AXI4_ADAP_inf_w.data_gnt    = SRAM_data_inf_w.data_gnt;
-            AXI4_ADAP_inf_w.data_rvalid = SRAM_data_inf_w.data_rvalid;
-            
-            DECODER_port1_inf_w.data_gnt  = 0;
-            DECODER_port1_inf_w.data_rvalid = 0;
-        end else begin
-            AXI4_ADAP_inf_w.data_gnt = 0;
-            AXI4_ADAP_inf_w.data_rvalid = 0;
-            
-            DECODER_port1_inf_w.data_gnt  = SRAM_data_inf_w.data_gnt;
-            DECODER_port1_inf_w.data_rvalid = SRAM_data_inf_w.data_rvalid;
-        end
-    end
+    assign DATA_inf_arbiter_valid_list_w[0] = DECODER_port1_inf_w.data_req;
+    assign DATA_inf_arbiter_valid_list_w[1] = AXI4_ADAP_inf_w.data_req;
+    
+    assign DECODER_port1_inf_w.data_rdata   = SRAM_data_inf_w.data_rdata;
+    assign AXI4_ADAP_inf_w.data_rdata       = SRAM_data_inf_w.data_rdata;
+    
+    assign SRAM_data_inf_w.data_addr   = (DATA_inf_arbiter_sel_w) ? AXI4_ADAP_inf_w.data_addr  : DECODER_port1_inf_w.data_addr; 
+    assign SRAM_data_inf_w.data_req    = (DATA_inf_arbiter_sel_w) ? AXI4_ADAP_inf_w.data_req   : DECODER_port1_inf_w.data_req;  
+    assign SRAM_data_inf_w.data_we     = (DATA_inf_arbiter_sel_w) ? AXI4_ADAP_inf_w.data_we    : DECODER_port1_inf_w.data_we;   
+    assign SRAM_data_inf_w.data_be     = (DATA_inf_arbiter_sel_w) ? AXI4_ADAP_inf_w.data_be    : DECODER_port1_inf_w.data_be;   
+    assign SRAM_data_inf_w.data_wdata  = (DATA_inf_arbiter_sel_w) ? AXI4_ADAP_inf_w.data_wdata : DECODER_port1_inf_w.data_wdata;
+    
+    assign AXI4_ADAP_inf_w.data_gnt    = (DATA_inf_arbiter_sel_w) ? SRAM_data_inf_w.data_gnt    : 0;
+    assign AXI4_ADAP_inf_w.data_rvalid = (DATA_inf_arbiter_sel_w) ? SRAM_data_inf_w.data_rvalid : 0;
+    
+    assign DECODER_port1_inf_w.data_gnt     = (DATA_inf_arbiter_sel_w) ? 0 : SRAM_data_inf_w.data_gnt;
+    assign DECODER_port1_inf_w.data_rvalid  = (DATA_inf_arbiter_sel_w) ? 0 : SRAM_data_inf_w.data_rvalid;
     
     ////////////////////////////////////////////////////////////////////////////////////
     //                                   ASSERTIONS                                   //
