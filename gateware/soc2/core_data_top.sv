@@ -147,10 +147,15 @@ module core_data_top
         input   logic                       s_axi_rready
     );
     
+    logic req_valid_w, req_done_w;
     logic decoder_sel_w, decoder_illegal_w, arbiter_sel_w;
     logic [1:0] arbiter_ready_list_w;
     
-    logic decoder_stage1_sel_w, arbiter_stege2_sel_w;
+    logic [CORE_ADDR_WIDTH-1:0] core_data_addr_r,   core_data_addr_w;
+    logic                       core_data_req_r,    core_data_req_w;
+    logic                       core_data_we_r,     core_data_we_w;
+    logic [CORE_BE_WIDTH-1:0]   core_data_be_r,     core_data_be_w;
+    logic [CORE_DATA_WIDTH-1:0] core_data_wdata_r,  core_data_wdata_w;
     
     logic [CORE_ADDR_WIDTH-1:0] decoder1_data_addr_w;
     logic                       decoder1_data_req_w;
@@ -205,68 +210,72 @@ module core_data_top
     assign decoder_addr_rule_w[1].start_addr    = soc_addr_rules_pkg::AXI_MASTER_ADDR_RULE.start_addr;
     assign decoder_addr_rule_w[1].end_addr      = soc_addr_rules_pkg::AXI_MASTER_ADDR_RULE.end_addr;
     
-    assign decoder1_data_addr_w     = core_data_addr_i    ;
-    assign decoder1_data_req_w      = (decoder_stage1_sel_w) ? 0 : core_data_req_i;
-    assign decoder1_data_we_w       = core_data_we_i      ;
-    assign decoder1_data_be_w       = core_data_be_i      ;
-    assign decoder1_data_wdata_w    = core_data_wdata_i   ;
+    assign decoder1_data_addr_w     = core_data_addr_w    ;
+    assign decoder1_data_req_w      = (decoder_sel_w) ? 0 : core_data_req_w;
+    assign decoder1_data_we_w       = core_data_we_w      ;
+    assign decoder1_data_be_w       = core_data_be_w      ;
+    assign decoder1_data_wdata_w    = core_data_wdata_w   ;
     
-    assign decoder2_data_addr_w     = core_data_addr_i    ;
-    assign decoder2_data_req_w      = (decoder_stage1_sel_w) ? core_data_req_i : 0;
-    assign decoder2_data_we_w       = core_data_we_i      ;
-    assign decoder2_data_be_w       = core_data_be_i      ;
-    assign decoder2_data_wdata_w    = core_data_wdata_i   ;
+    assign decoder2_data_addr_w     = core_data_addr_w    ;
+    assign decoder2_data_req_w      = (decoder_sel_w) ? core_data_req_w : 0;
+    assign decoder2_data_we_w       = core_data_we_w      ;
+    assign decoder2_data_be_w       = core_data_be_w      ;
+    assign decoder2_data_wdata_w    = core_data_wdata_w   ;
     
-    assign core_data_gnt_o          = (decoder_stage1_sel_w) ? decoder2_data_gnt_w     : decoder1_data_gnt_w   ;
-    assign core_data_rvalid_o       = (decoder_stage1_sel_w) ? decoder2_data_rvalid_w  : decoder1_data_rvalid_w;
-    assign core_data_rdata_o        = (decoder_stage1_sel_w) ? decoder2_data_rdata_w   : decoder1_data_rdata_w ;
+    assign core_data_gnt_o          = req_valid_w;
+    assign core_data_rvalid_o       = (old_dec_sel_r) ? decoder2_data_rvalid_w  : decoder1_data_rvalid_w;
+    assign core_data_rdata_o        = (old_dec_sel_r) ? decoder2_data_rdata_w   : decoder1_data_rdata_w ;
     
     assign arbiter_ready_list_w[0]  = decoder1_data_req_w;
     assign arbiter_ready_list_w[1]  = axi_slave_data_req_w;
     
-    assign sram_data_addr_w         = (arbiter_stege2_sel_w) ? axi_slave_data_addr_w   : decoder1_data_addr_w    ;
-    assign sram_data_req_w          = (arbiter_stege2_sel_w) ? axi_slave_data_req_w    : decoder1_data_req_w     ;
-    assign sram_data_we_w           = (arbiter_stege2_sel_w) ? axi_slave_data_we_w     : decoder1_data_we_w      ;
-    assign sram_data_be_w           = (arbiter_stege2_sel_w) ? axi_slave_data_be_w     : decoder1_data_be_w      ;
-    assign sram_data_wdata_w        = (arbiter_stege2_sel_w) ? axi_slave_data_wdata_w  : decoder1_data_wdata_w   ;
+    assign sram_data_addr_w         = (arbiter_sel_w) ? axi_slave_data_addr_w   : decoder1_data_addr_w    ;
+    assign sram_data_req_w          = (arbiter_sel_w) ? axi_slave_data_req_w    : decoder1_data_req_w     ;
+    assign sram_data_we_w           = (arbiter_sel_w) ? axi_slave_data_we_w     : decoder1_data_we_w      ;
+    assign sram_data_be_w           = (arbiter_sel_w) ? axi_slave_data_be_w     : decoder1_data_be_w      ;
+    assign sram_data_wdata_w        = (arbiter_sel_w) ? axi_slave_data_wdata_w  : decoder1_data_wdata_w   ;
     
-    assign axi_slave_data_gnt_w     = (arbiter_stege2_sel_w) ? sram_data_gnt_w         : 0 ;
-    assign axi_slave_data_rvalid_w  = (arbiter_stege2_sel_w) ? sram_data_rvalid_w      : 0 ;
+    assign axi_slave_data_gnt_w     = (arbiter_sel_w) ? sram_data_gnt_w         : 0 ;
+    assign axi_slave_data_rvalid_w  = (arbiter_sel_w) ? sram_data_rvalid_w      : 0 ;
     assign axi_slave_data_rdata_w   = sram_data_rdata_w;
     
-    assign decoder1_data_gnt_w      = (arbiter_stege2_sel_w) ? 0 : sram_data_gnt_w    ;
-    assign decoder1_data_rvalid_w   = (arbiter_stege2_sel_w) ? 0 : sram_data_rvalid_w ;
+    assign decoder1_data_gnt_w      = (arbiter_sel_w) ? 0 : sram_data_gnt_w    ;
+    assign decoder1_data_rvalid_w   = (arbiter_sel_w) ? 0 : sram_data_rvalid_w ;
     assign decoder1_data_rdata_w    = sram_data_rdata_w;
     
-    logic decoder_stage1_valid_r, arbiter_stege2_valid_r;
-    logic decoder_stage1_sel_r, arbiter_stege2_sel_r;
-    assign decoder_stage1_sel_w = (decoder_stage1_valid_r) ? decoder_stage1_sel_r : decoder_sel_w;
-    assign arbiter_stege2_sel_w = (arbiter_stege2_valid_r) ? arbiter_stege2_sel_r : arbiter_sel_w;
+    assign core_data_req_w          = (req_valid_w) ? core_data_req_i   : core_data_req_r  ;
+    assign core_data_addr_w         = (req_valid_w) ? core_data_addr_i  : core_data_addr_r ;
+    assign core_data_we_w           = (req_valid_w) ? core_data_we_i    : core_data_we_r   ;
+    assign core_data_be_w           = (req_valid_w) ? core_data_be_i    : core_data_be_r   ;
+    assign core_data_wdata_w        = (req_valid_w) ? core_data_wdata_i : core_data_wdata_r;
+    
+    logic old_dec_sel_r;
+    
+    assign req_done_w               = (old_dec_sel_r) ? decoder2_data_rvalid_w : decoder1_data_rvalid_w;
+    assign req_valid_w              = ~core_data_req_r | req_done_w;
+    
     always_ff @(posedge clk_i, negedge reset_ni) begin
         if (~reset_ni) begin
-            decoder_stage1_valid_r <= 0;
-            arbiter_stege2_valid_r <= 0;
-            decoder_stage1_sel_r <= 0;
-            arbiter_stege2_sel_r <= 0;
+            core_data_req_r     <= 0;
+            core_data_addr_r    <= 0;
+            core_data_we_r      <= 0;
+            core_data_be_r      <= 0;
+            core_data_wdata_r   <= 0;
+            old_dec_sel_r       <= 0;
         end else begin
-            if (decoder_stage1_valid_r) begin
-                if (core_data_rvalid_o) begin
-                    decoder_stage1_valid_r <= 1'b0;
+            if (req_valid_w) begin
+                core_data_req_r     <= core_data_req_i;
+                core_data_addr_r    <= core_data_addr_i;
+                core_data_we_r      <= core_data_we_i;
+                core_data_be_r      <= core_data_be_i;
+                core_data_wdata_r   <= core_data_wdata_i;
+                old_dec_sel_r       <= decoder_sel_w;
+            end else if (core_data_req_r) begin
+                if (req_done_w) begin
+                    core_data_req_r <= 0;
                 end
-            end else if (core_data_req_i) begin
-                decoder_stage1_valid_r <= 1'b1;
-                decoder_stage1_sel_r <= decoder_sel_w;
             end
-            
-            if (arbiter_stege2_valid_r) begin
-                if (sram_data_rvalid_w) begin
-                    arbiter_stege2_valid_r <= 1'b0;
-                end
-            end else if (sram_data_req_w) begin
-                arbiter_stege2_valid_r <= 1'b1;
-                arbiter_stege2_sel_r <= arbiter_sel_w;
-            end
-        end 
+        end
     end
     
     addr_decode #(
@@ -277,7 +286,7 @@ module core_data_top
         .PORT_COUNT             ( 2                         )
     ) INTERFACE_DECODER (
         .addr_rule_map_i        ( decoder_addr_rule_w       ),
-        .addr_i                 ( core_data_addr_i          ),
+        .addr_i                 ( core_data_addr_w          ),
         .illegal_o              ( decoder_illegal_w         ),
         .selected_id_o          ( decoder_sel_w             )
     );
@@ -455,9 +464,9 @@ module core_data_top
     always_ff @(posedge clk_i, negedge reset_ni) begin
         if (~reset_ni) begin
         end else begin
-            if (core_data_req_i) begin
+            if (core_data_req_w) begin
                 `ASSERT((~decoder_illegal_w), 
-                    $sformatf("core_data_top.sv: illegal decoded addr, addr data: %h", core_data_addr_i))
+                    $sformatf("core_data_top.sv: illegal decoded addr, addr data: %h", core_data_addr_w))
             end
         end
     end

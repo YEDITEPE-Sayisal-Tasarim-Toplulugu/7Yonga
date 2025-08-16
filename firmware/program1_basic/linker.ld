@@ -1,14 +1,23 @@
+/* M. Furkan UZUN */
+
+/* The OUTPUT_ARCH command specifies the machine architecture where the
+   argument is one of the names used in the BFD library. More
+   specifically one of the entires in bfd/cpu-mips.c */
+OUTPUT_ARCH( "riscv" )
+
 /* Entry Point */
-ENTRY(_start)
+ENTRY( _startup )
+
+GROUP( -lc -lgloss -lgcc )
 
 /* Highest address of the user mode stack */
-_estack = ORIGIN(RAM) + LENGTH(RAM); /* end of "RAM" Ram type memory */
+_estack = ORIGIN(DMEM) + LENGTH(DMEM); /* end of "DMEM" Ram type memory */
 
 MEMORY
 {
     /* Bellek bölgeleri */
-    rom (rx)  : ORIGIN = 0x00000000, LENGTH = 2K    /* Kod ve sabit veri */
-    ram (rwx) : ORIGIN = 0x20000000, LENGTH = 8K    /* Çalışma zamanı veri, stack, heap */
+    IMEM (rx)  : ORIGIN = 0x00000800, LENGTH = 8K    /* Kod ve sabit veri */
+    DMEM (rwx) : ORIGIN = 0x20000000, LENGTH = 8K    /* Çalışma zamanı veri, stack, heap */
 }
 
 SECTIONS
@@ -20,28 +29,43 @@ SECTIONS
         *(.text.*)          /* .text* sections (code) */
         . = ALIGN(4);
         _etext = .;         /* define a global symbols at end of code */
-    } > rom
+    } > IMEM
 
-    /* Sabit veri (.rodata) ROM’a */
+    /* rodata: Read-only data */
     .rodata : {
         . = ALIGN(4);
         *(.rodata)          /* .rodata sections (constants, strings, etc.) */
         *(.rodata.*)        /* .rodata* sections (constants, strings, etc.) */
         . = ALIGN(4);
-    } > rom
+    } > IMEM
 
     /* Used by the startup to initialize data */
     _sidata = LOADADDR(.data);
 
-    /* Başlangıçta RAM’e kopyalanacak .data */
     .data : {
+        _sdata = .;
+         *(.data)
+        *(.data.*)
+        *(.gnu.linkonce.d.*)
         . = ALIGN(4);
-        _sdata = .;         /* create a global symbol at data start */
-        *(.data)            /* .data sections */
-        *(.data.*)          /* .data* sections */
+        _edata = .;
+    } > DMEM AT > IMEM
+
+    . = ALIGN(16);
+    _gp = . + 0x800;
+
+    _ssidata = LOADADDR(.sdata);
+
+     /* Writable small data segment */
+    .sdata : {
+        _ssdata = .;
+        *(.sdata)
+        *(.sdata.*)
+        *(.srodata.*)
+        *(.gnu.linkonce.s.*)
         . = ALIGN(4);
-        _edata = .;         /* define a global symbol at data end */
-    } > ram AT > rom
+        _esdata = .;
+    } > DMEM AT > IMEM
 
     /* Sıfırlanacak .bss RAM’de */
     . = ALIGN(4);
@@ -56,7 +80,7 @@ SECTIONS
         . = ALIGN(4);
         _ebss = .;         /* define a global symbol at bss end */
         __bss_end__ = _ebss;
-    } > ram
+    } > DMEM
 
     /* Program sonu adresi (heap başlangıcı için kullanılabilir) */
     . = ALIGN(4);

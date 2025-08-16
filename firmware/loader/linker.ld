@@ -2,7 +2,7 @@
 ENTRY(_start)
 
 /* Highest address of the user mode stack */
-_estack = ORIGIN(RAM) + LENGTH(RAM); /* end of "RAM" Ram type memory */
+_estack = ORIGIN(ram) + LENGTH(ram); /* end of "RAM" Ram type memory */
 
 MEMORY
 {

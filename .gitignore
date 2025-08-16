@@ -15,3 +15,4 @@ gateware/axi4/axi
 gateware/pulp_common_cell/common_cells
 gateware/axi4_v2/verilog-axi
 
+.vscode

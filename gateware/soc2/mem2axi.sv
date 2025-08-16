@@ -121,7 +121,7 @@ module mem2axi
     assign m_axi_wuser          = 0;
     assign m_axi_wvalid         = core_data_req_r & core_data_we_r & ~axi_w_ready_r;
     
-    assign m_axi_bready         = core_data_req_r & core_data_we_r & ~axi_b_ready_r;
+    assign m_axi_bready         = core_data_req_r & (axi_aw_ready_r & axi_w_ready_r & axi_b_ready_r);
     
     assign m_axi_arid           = 0;
     assign m_axi_araddr         = core_data_addr_r;
@@ -136,12 +136,12 @@ module mem2axi
     assign m_axi_aruser         = 0;
     assign m_axi_arvalid        = core_data_req_r & ~core_data_we_r & ~axi_ar_ready_r;
     
-    assign m_axi_rready         = core_data_req_r & ~core_data_we_r & ~axi_r_ready_r;
+    assign m_axi_rready         = core_data_req_r & (axi_ar_ready_r & axi_r_ready_r);
     
-    assign core_data_gnt_o      = (core_data_req_r & core_data_we_r) 
-        ? (axi_aw_ready_r & axi_w_ready_r & axi_b_ready_r) : (axi_ar_ready_r & axi_r_ready_r);
-    assign core_data_rvalid_o   = (core_data_req_r & core_data_we_r) 
-        ? (axi_aw_ready_r & axi_w_ready_r & axi_b_ready_r) : (axi_ar_ready_r & axi_r_ready_r);
+    assign core_data_gnt_o      = core_data_req_r & ((core_data_we_r) 
+        ? (axi_aw_ready_r & axi_w_ready_r & axi_b_ready_r) : (axi_ar_ready_r & axi_r_ready_r));
+    assign core_data_rvalid_o   = core_data_req_r & ((core_data_we_r) 
+        ? (axi_aw_ready_r & axi_w_ready_r & axi_b_ready_r) : (axi_ar_ready_r & axi_r_ready_r));
     assign core_data_rdata_o    = m_axi_rdata;
     
     always_ff @(posedge clk_i, negedge reset_ni) begin

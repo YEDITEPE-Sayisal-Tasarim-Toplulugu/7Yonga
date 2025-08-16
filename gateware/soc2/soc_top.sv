@@ -29,7 +29,14 @@ module soc_top
         input logic clk_i, reset_ni,
         
         output  logic                       peripheral_uart_tx_o, 
-        input   logic                       peripheral_uart_rx_i
+        input   logic                       peripheral_uart_rx_i,
+        
+        // QSPI Interface
+        output logic                        peripheral_qspi_sclk_o,
+        output logic                        peripheral_qspi_cs_no,
+        output logic [3:0]                  peripheral_qspi_data_o,
+        input  logic [3:0]                  peripheral_qspi_data_i,
+        output logic [3:0]                  peripheral_qspi_data_oen   // Output enable (0: output, 1: input)
     );
     
     localparam integer INST_MEMORY_SIZE_IN_KB   = 8;
@@ -49,8 +56,8 @@ module soc_top
     localparam integer AXI_USER_WIDTH           = 1;
     localparam integer AXI_STRB_WIDTH           = (AXI_DATA_WIDTH/8);
     
-    localparam integer AXI_PERIPHERAL_TOP_ID    = 0;
-    localparam integer AXI_INST_TOP_ID          = 1;
+    localparam integer AXI_INST_TOP_ID          = 0;
+    localparam integer AXI_PERIPHERAL_TOP_ID    = 1;
     localparam integer AXI_DATA_TOP_ID          = 2;
     
     localparam integer AXIL_ADDR_WIDTH          = 20;
@@ -232,7 +239,7 @@ module soc_top
         .core_sleep_o           ()
     );
     
-    core_inst_top #(
+    core_inst_top_v2 #(
         .INST_MEMORY_SIZE_IN_KB         ( INST_MEMORY_SIZE_IN_KB    ),
         .CORE_ADDR_WIDTH                ( CORE_ADDR_WIDTH           ),
         .CORE_DATA_WIDTH                ( CORE_DATA_WIDTH           ),
@@ -436,6 +443,13 @@ module soc_top
         
         .peripheral_uart_tx_o   ( peripheral_uart_tx_o      ),
         .peripheral_uart_rx_i   ( peripheral_uart_rx_i      ),
+        
+        // QSPI Interface
+        .qspi_sclk_o            ( peripheral_qspi_sclk_o    ),
+        .qspi_cs_no             ( peripheral_qspi_cs_no     ),
+        .qspi_data_o            ( peripheral_qspi_data_o    ),
+        .qspi_data_i            ( peripheral_qspi_data_i    ),
+        .qspi_data_oen          ( peripheral_qspi_data_oen  ),
         
         /*
         * AXI slave interface

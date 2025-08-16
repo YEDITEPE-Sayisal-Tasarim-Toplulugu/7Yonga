@@ -5,7 +5,7 @@ OUTDIR			= ./OUT
 PYTHON	 		= python3
 GEN 			= boot_code_generator.py
 
-BINFILE			= $(FIRMWARE_DIR)/step0/program.bin
+BINFILE			?= $(FIRMWARE_DIR)/loader/BUILD/program.bin
 TEMPFILE		= boot_code_file_template.txt
 OUTFILE			= boot_code.sv
 

@@ -98,7 +98,7 @@ module axi_crossbar_wrap
         parameter S_AR_REG_TYPE = {S_COUNT{2'd0}},
         // Slave interface R channel register type (output)
         // 0 to bypass, 1 for simple buffer, 2 for skid buffer
-        parameter S_R_REG_TYPE = {S_COUNT{2'd2}},
+        parameter S_R_REG_TYPE = {S_COUNT{2'd0}},
         // Master interface AW channel register type (output)
         // 0 to bypass, 1 for simple buffer, 2 for skid buffer
         parameter M_AW_REG_TYPE = {M_COUNT{2'd1}},

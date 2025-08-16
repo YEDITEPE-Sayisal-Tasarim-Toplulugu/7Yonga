@@ -5,40 +5,78 @@ program.elf:     file format elf32-littleriscv
 Disassembly of section .text:
 
 00000000 <_start>:
-   0:	02a00513          	li	a0,42
-   4:	05d00893          	li	a7,93
+   0:	02a00513          	addi	a0,zero,42
+   4:	05d00893          	addi	a7,zero,93
    8:	20000537          	lui	a0,0x20000
    c:	075bd5b7          	lui	a1,0x75bd
-  10:	d1558593          	addi	a1,a1,-747 # 75bcd15 <_end+0x75bcc81>
-  14:	00b52023          	sw	a1,0(a0) # 20000000 <_end+0x1fffff6c>
-  18:	10000537          	lui	a0,0x10000
-  1c:	075bd5b7          	lui	a1,0x75bd
-  20:	d1558593          	addi	a1,a1,-747 # 75bcd15 <_end+0x75bcc81>
-  24:	00b52023          	sw	a1,0(a0) # 10000000 <_end+0xfffff6c>
-  28:	00010537          	lui	a0,0x10
-  2c:	000015b7          	lui	a1,0x1
-  30:	45858593          	addi	a1,a1,1112 # 1458 <_end+0x13c4>
-  34:	00b52023          	sw	a1,0(a0) # 10000 <_end+0xff6c>
-  38:	00000593          	li	a1,0
-  3c:	00b52223          	sw	a1,4(a0)
-  40:	075bd5b7          	lui	a1,0x75bd
-  44:	d1558593          	addi	a1,a1,-747 # 75bcd15 <_end+0x75bcc81>
+  10:	d1558593          	addi	a1,a1,-747 # 75bcd15 <_end+0x75bcc45>
+  14:	00b52023          	sw	a1,0(a0) # 20000000 <_end+0x1fffff30>
+  18:	00001537          	lui	a0,0x1
+  1c:	80050513          	addi	a0,a0,-2048 # 800 <_end+0x730>
+  20:	075bd5b7          	lui	a1,0x75bd
+  24:	d1558593          	addi	a1,a1,-747 # 75bcd15 <_end+0x75bcc45>
+  28:	00b52023          	sw	a1,0(a0)
+  2c:	10010537          	lui	a0,0x10010
+  30:	000015b7          	lui	a1,0x1
+  34:	45858593          	addi	a1,a1,1112 # 1458 <_end+0x1388>
+  38:	00b52023          	sw	a1,0(a0) # 10010000 <_end+0x1000ff30>
+  3c:	00000593          	addi	a1,zero,0
+  40:	00b52223          	sw	a1,4(a0)
+  44:	04100593          	addi	a1,zero,65
   48:	00b52623          	sw	a1,12(a0)
-  4c:	00100593          	li	a1,1
+  4c:	00300593          	addi	a1,zero,3
   50:	00b52823          	sw	a1,16(a0)
-  54:	0000006f          	j	54 <_start+0x54>
-  58:	00000013          	nop
-  5c:	00000013          	nop
-  60:	00000013          	nop
-  64:	00000013          	nop
-  68:	00000013          	nop
-  6c:	00000013          	nop
-  70:	00000013          	nop
-  74:	00000013          	nop
-  78:	00000013          	nop
-  7c:	00000013          	nop
-  80:	00000013          	nop
-  84:	00000013          	nop
-  88:	00000013          	nop
-  8c:	00000013          	nop
-  90:	00000013          	nop
+  54:	00100613          	addi	a2,zero,1
+  58:	0c000693          	addi	a3,zero,192
+
+0000005c <send_char>:
+  5c:	00068583          	lb	a1,0(a3)
+  60:	00b50623          	sb	a1,12(a0)
+  64:	00c52823          	sw	a2,16(a0)
+  68:	01052303          	lw	t1,16(a0)
+  6c:	00737313          	andi	t1,t1,7
+  70:	00235313          	srli	t1,t1,0x2
+  74:	fe030ae3          	beq	t1,zero,68 <send_char+0xc>
+  78:	00168693          	addi	a3,a3,1
+  7c:	fe0590e3          	bne	a1,zero,5c <send_char>
+  80:	0000006f          	jal	zero,80 <send_char+0x24>
+  84:	00000013          	addi	zero,zero,0
+  88:	00000013          	addi	zero,zero,0
+  8c:	00000013          	addi	zero,zero,0
+  90:	00000013          	addi	zero,zero,0
+  94:	00000013          	addi	zero,zero,0
+  98:	00000013          	addi	zero,zero,0
+  9c:	00000013          	addi	zero,zero,0
+  a0:	00000013          	addi	zero,zero,0
+  a4:	00000013          	addi	zero,zero,0
+  a8:	00000013          	addi	zero,zero,0
+  ac:	00000013          	addi	zero,zero,0
+  b0:	00000013          	addi	zero,zero,0
+  b4:	00000013          	addi	zero,zero,0
+  b8:	00000013          	addi	zero,zero,0
+  bc:	00000013          	addi	zero,zero,0
+
+Disassembly of section .rodata:
+
+000000c0 <string_data>:
+  c0:	6548                	.insn	2, 0x6548
+  c2:	6c6c                	.insn	2, 0x6c6c
+  c4:	6f57206f          	jal	zero,72fb8 <_end+0x72ee8>
+  c8:	6c72                	.insn	2, 0x6c72
+  ca:	2164                	.insn	2, 0x2164
+	...
+
+Disassembly of section .riscv.attributes:
+
+00000000 <.riscv.attributes>:
+   0:	1941                	.insn	2, 0x1941
+   2:	0000                	.insn	2, 0x
+   4:	7200                	.insn	2, 0x7200
+   6:	7369                	.insn	2, 0x7369
+   8:	01007663          	bgeu	zero,a6,14 <_start+0x14>
+   c:	0000000f          	fence	unknown,unknown
+  10:	7205                	.insn	2, 0x7205
+  12:	3376                	.insn	2, 0x3376
+  14:	6932                	.insn	2, 0x6932
+  16:	7032                	.insn	2, 0x7032
+  18:	0031                	.insn	2, 0x0031

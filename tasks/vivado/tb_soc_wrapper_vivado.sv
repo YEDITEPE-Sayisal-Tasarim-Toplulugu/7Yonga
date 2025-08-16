@@ -26,16 +26,28 @@ module tb_soc_wrapper_vivado();
     `SIM_CLK_RST(10, 5, 500_000)
     
     logic uart0_rx, uart0_tx;
+    logic clk_w;
     
     soc_wrapper_vivado DUT
     (
         .clk            ( `CLK          ),
         .resetn         ( `RST          ),
         .rx             ( uart0_rx      ),
-        .tx             ( uart0_tx      )
+        .tx             ( uart0_tx      ),
+        
+        .clk_o          ( clk_w         )
     );
     
     assign uart0_rx = 1'b1;
+    
+    uart_monitor #(
+        .CLK_FREQ_HZ    ( 1_000_000*100 ),
+        .BAUD_RATE      ( 9600          )
+    ) UART_MONITOR (
+        .clk            ( clk_w         ),
+        .rst_n          ( `RST          ),
+        .uart_line      ( uart0_tx      )
+    );
     
 endmodule
 

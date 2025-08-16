@@ -38,8 +38,16 @@ module soc_peripherals_top_v2
     (
         input   logic                       clk_i, reset_ni,
         
+        // UART Interface
         output  logic                       peripheral_uart_tx_o, 
         input   logic                       peripheral_uart_rx_i,
+        
+        // QSPI Interface
+        output logic                        qspi_sclk_o,
+        output logic                        qspi_cs_no,
+        output logic [3:0]                  qspi_data_o,
+        input  logic [3:0]                  qspi_data_i,
+        output logic [3:0]                  qspi_data_oen,   // Output enable (0: output, 1: input)
         
         /*
         * AXI slave interface
@@ -91,9 +99,10 @@ module soc_peripherals_top_v2
     );
     
     localparam integer AXIL_MASTER_COUNT    = 1;
-    localparam integer AXIL_SLAVE_COUNT     = 1;
+    localparam integer AXIL_SLAVE_COUNT     = 2;
     
     localparam integer AXIL_UART_PORT       = 0;
+    localparam integer AXIL_QSPI_PORT       = 1;
     
     localparam AXIL_ADDR_DECODE_POINT       = 32'd16;
     
@@ -155,8 +164,8 @@ module soc_peripherals_top_v2
     
     uart UART (
         // Clock and reset signals
-        .s_axi_aclk         ( clk_i             ),
-        .s_axi_aresetn      ( reset_ni          ),
+        .s_axi_aclk             ( clk_i                             ),
+        .s_axi_aresetn          ( reset_ni                          ),
         
         // AXI4-Lite Slave Arayüzü
         // Write Address Channel
@@ -189,6 +198,50 @@ module soc_peripherals_top_v2
         // UART pins
         .uart_rx                ( peripheral_uart_rx_i              ),
         .uart_tx                ( peripheral_uart_tx_o              )
+    );
+    
+    qspi_master #(
+        .AXI_ADDR_WIDTH         ( AXIL_ADDR_WIDTH                   ),
+        .AXI_DATA_WIDTH         ( AXIL_DATA_WIDTH                   )
+    ) QSPI (
+        // Sistem sinyalleri
+        .clk_i                  ( clk_i                             ),
+        .rst_ni                 ( reset_ni                          ),
+        
+        // AXI4-Lite Slave Arayüzü
+        // Write Address Channel
+        .s_axi_awaddr           ( m_axil_awaddr[AXIL_QSPI_PORT]     ),
+        .s_axi_awvalid          ( m_axil_awvalid[AXIL_QSPI_PORT]    ),
+        .s_axi_awready          ( m_axil_awready[AXIL_QSPI_PORT]    ),
+        
+        // Write Data Channel
+        .s_axi_wdata            ( m_axil_wdata[AXIL_QSPI_PORT]      ),
+        .s_axi_wstrb            ( m_axil_wstrb[AXIL_QSPI_PORT]      ),
+        .s_axi_wvalid           ( m_axil_wvalid[AXIL_QSPI_PORT]     ),
+        .s_axi_wready           ( m_axil_wready[AXIL_QSPI_PORT]     ),
+        
+        // Write Response Channel
+        .s_axi_bresp            ( m_axil_bresp[AXIL_QSPI_PORT]      ),
+        .s_axi_bvalid           ( m_axil_bvalid[AXIL_QSPI_PORT]     ),
+        .s_axi_bready           ( m_axil_bready[AXIL_QSPI_PORT]     ),
+        
+        // Read Address Channel
+        .s_axi_araddr           ( m_axil_araddr[AXIL_QSPI_PORT]     ),
+        .s_axi_arvalid          ( m_axil_arvalid[AXIL_QSPI_PORT]    ),
+        .s_axi_arready          ( m_axil_arready[AXIL_QSPI_PORT]    ),
+        
+        // Read Data Channel
+        .s_axi_rdata            ( m_axil_rdata[AXIL_QSPI_PORT]      ),
+        .s_axi_rresp            ( m_axil_rresp[AXIL_QSPI_PORT]      ),
+        .s_axi_rvalid           ( m_axil_rvalid[AXIL_QSPI_PORT]     ),
+        .s_axi_rready           ( m_axil_rready[AXIL_QSPI_PORT]     ),
+        
+        // QSPI Interface
+        .qspi_sclk_o            ( qspi_sclk_o                       ),
+        .qspi_cs_no             ( qspi_cs_no                        ),
+        .qspi_data_o            ( qspi_data_o                       ),
+        .qspi_data_i            ( qspi_data_i                       ),
+        .qspi_data_oen          ( qspi_data_oen                     )
     );
     
     axi_axil_adapter #(

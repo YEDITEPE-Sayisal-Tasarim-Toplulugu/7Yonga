@@ -8,6 +8,7 @@ CC      = $(CROSS_COMPILE)gcc
 LD      = $(CROSS_COMPILE)ld
 OBJDUMP = $(CROSS_COMPILE)objdump
 OBJCOPY = $(CROSS_COMPILE)objcopy
+PY_BIN_PARSER	?= ../riscv_tool_hexdump.py
 
 # Architecture settings
 RV_MODE   = rv32i
@@ -34,7 +35,7 @@ $(TARGET).elf: $(SRC) $(LINKER_SCRIPT)
 
 # Generate disassembly
 dump: $(TARGET).elf
-	$(OBJDUMP) -d $(TARGET).elf > $(TARGET).dump
+	$(OBJDUMP) -M no-aliases -D $(TARGET).elf > $(TARGET).dump
 
 # Generate raw binary
 bin: $(TARGET).elf
@@ -42,7 +43,7 @@ bin: $(TARGET).elf
 
 # .bin'den .mem
 $(TARGET).mem: $(TARGET).bin
-	$(PYTHON) riscv_tool_hexdump.py --t mem --o $@ --bin $<
+	$(PYTHON) $(PY_BIN_PARSER) --t mem --o $@ --bin $<
 
 # Clean build artifacts
 clean:

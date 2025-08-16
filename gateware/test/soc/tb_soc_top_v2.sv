@@ -23,7 +23,7 @@
 
 module tb_soc_top_v2();
 
-    `SIM_CLK_RST(10, 5, 5000000)
+    `SIM_CLK_RST(20, 5, 500)
     
     logic uart0_tx, uart0_rx;
     
@@ -38,14 +38,14 @@ module tb_soc_top_v2();
     assign uart0_rx = 1'b1;
     
     uart_monitor #(
-        .CLK_FREQ_HZ    ( 1_000_000*100 ),
+        .CLK_FREQ_HZ    ( 1_000_000*50 ),
         .BAUD_RATE      ( 9600          )
     ) UART_MONITOR (
         .clk            ( `CLK          ),
         .rst_n          ( `RST          ),
         .uart_line      ( uart0_tx      )
-    );    
-
+    );
+    
 endmodule
 
 

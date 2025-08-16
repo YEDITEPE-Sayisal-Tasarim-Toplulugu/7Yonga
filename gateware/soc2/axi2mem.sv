@@ -196,6 +196,10 @@ module axi2mem
                     end
                     
                     if (s_axi_slave_valid_r & s_axi_bready) begin
+                        s_axi_addr_valid_r  <= 0;
+                        s_axi_r_valid_r     <= 0;
+                        s_axi_slave_valid_r <= 0;
+                    
                         status_r <= IDLE;
                     end
                 end
@@ -208,6 +212,10 @@ module axi2mem
                     mem_gnt_r <= core_data_gnt_i;
                     
                     if (s_axi_rready) begin
+                        s_axi_addr_valid_r  <= 0;
+                        s_axi_r_valid_r     <= 0;
+                        s_axi_slave_valid_r <= 0;
+                    
                         status_r <= IDLE;
                     end
                 end
