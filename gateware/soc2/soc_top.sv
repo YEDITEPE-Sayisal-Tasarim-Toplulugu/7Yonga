@@ -28,6 +28,7 @@ module soc_top
     (
         input logic clk_i, reset_ni,
         
+        // UART Interface
         output  logic                       peripheral_uart_tx_o, 
         input   logic                       peripheral_uart_rx_i,
         

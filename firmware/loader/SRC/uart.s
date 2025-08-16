@@ -1,7 +1,7 @@
-.section .text
-.global UART_send_string
+    .section .text
+    .global UART_send_string
 
-.equ UART_BASE, 0x10010000
+    .equ UART_BASE, 0x10010000
 
 # void UART_send_string(const char *str);
 # a0 = str pointer

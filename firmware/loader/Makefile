@@ -16,6 +16,7 @@ MABI_MODE 		= ilp32
 BUILD_DIR 		?= BUILD
 OBJ_DIR 		?= OBJ
 TARGET  		= $(BUILD_DIR)/program
+INC_FLAG 		+= -I./INC
 SRC_DIR 		= SRC
 LINKER_SCRIPT 	= linker.ld
 
@@ -26,7 +27,7 @@ OBJS  = $(patsubst $(SRC_DIR)/%.s, $(OBJ_DIR)/%.o, $(filter %.s,$(SRCS))) \
 
 # Flags
 ASFLAGS  = -march=$(RV_MODE) -mabi=$(MABI_MODE)
-CFLAGS   = $(ASFLAGS) -nostdlib -ffreestanding -Wall -O2
+CFLAGS   = $(ASFLAGS) $(INC_FLAG) -nostdlib -ffreestanding -Wall -O2
 LDFLAGS  = $(ASFLAGS) -nostdlib -ffreestanding -T $(LINKER_SCRIPT)
 
 PYTHON   = python3
