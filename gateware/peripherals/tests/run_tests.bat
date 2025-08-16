@@ -1,125 +1,144 @@
 @echo off
-rem ============================================================
-rem  SystemVerilog Testbench Runner – Windows (ModelSim / XSIM)
-rem ============================================================
-rem  Gereken dizinler
-if not exist logs           md logs
-if not exist work           md work
-if not exist test_results   md test_results
+setlocal enabledelayedexpansion
 
-rem ------------------------------------------------------------
-rem  Renk kodları (Windows 10+  ANSI destekli)
-for /f "delims=" %%A in ('echo prompt $E^| cmd') do set "ESC=%%A"
-set "RED=%ESC%[31m"
-set "GREEN=%ESC%[32m"
-set "YEL=%ESC%[33m"
-set "BLU=%ESC%[34m"
-set "RST=%ESC%[0m"
+echo ======================================
+echo    SystemVerilog Testbench Runner    
+echo         Windows - XSIM (Vivado)      
+echo ======================================
+echo.
 
-echo(
-echo   %BLU%======================================%RST%
-echo   %BLU%  Windows Testbench Runner           %RST%
-echo   %BLU%======================================%RST%
-echo(
-
-rem ------------------------------------------------------------
-rem  Simülatör algılama
-set SIM=
-where vsim    >nul 2>nul && set SIM=modelsim
-where xvlog   >nul 2>nul && where xsim >nul 2>nul && set SIM=xsim
-
-if not defined SIM (
-    echo %RED%ERROR:%RST% Uygun bir simülatör bulunamadı^!
-    echo ModelSim yükleyin **veya** Vivado "Tcl Shell" te çalıştırın.
+REM Check if xvlog is available
+where xvlog >nul 2>nul
+if %errorlevel% neq 0 (
+    echo ERROR: XSIM not found in PATH!
+    echo Please run Vivado settings64.bat first or add to PATH
+    echo Example: C:\Xilinx\Vivado\2023.2\settings64.bat
+    pause
     exit /b 1
 )
-echo %GREEN%Found %SIM%%RST%
-echo(
 
-rem ------------------------------------------------------------
-rem  Ortak ayarlar
-set RTL=gpio.sv timer.sv uart.sv qspi_master.sv
-set TESTS=gpio_tb:gpio timer_tb:timer tb_uart:uart qspi_master_tb:qspi_master
+REM Create directories
+if not exist "xsim_work" mkdir xsim_work
+if not exist "test_results" mkdir test_results
+if not exist "logs" mkdir logs
 
-rem ============================================================
-rem  MODEL SIM  ------------------------------------------------
-if "%SIM%"=="modelsim" (
-    echo %BLU%--- RTL derleniyor (ModelSim)...%RST%
-    vlib work
-    vlog -sv %RTL% > logs\rtl_compile.log 2>&1 || goto :fatal_rtl
+REM Clean previous results
+echo Cleaning previous results...
+if exist "xsim.dir" rmdir /s /q xsim.dir
+del /q logs\*.log 2>nul
+del /q *.jou 2>nul
+del /q *.pb 2>nul
+del /q *.wdb 2>nul
 
-    for %%T in (%TESTS%) do (
-        for /f "tokens=1,2 delims=:" %%a in ("%%T") do (
-            call :run_msim %%a %%b
-        )
-    )
-    goto :summary
+REM Initialize counters
+set /a total_tests=0
+set /a passed_tests=0
+set /a failed_tests=0
+
+REM Compile all RTL files
+echo.
+echo Compiling RTL files...
+xvlog -sv gpio.sv timer.sv uart.sv qspi_master.sv > logs\rtl_compile.log 2>&1
+if %errorlevel% neq 0 (
+    echo ERROR: RTL compilation failed!
+    echo Check logs\rtl_compile.log for details
+    pause
+    exit /b 1
+)
+echo RTL compilation successful!
+
+REM Run tests
+echo.
+echo Running testbenches...
+echo ----------------------
+
+call :run_test gpio_tb gpio
+call :run_test timer_tb timer  
+call :run_test tb_uart uart
+call :run_test qspi_master_tb qspi_master
+
+REM Print summary
+echo.
+echo ======================================
+echo            TEST SUMMARY              
+echo ======================================
+echo Total tests:  %total_tests%
+echo Passed:       %passed_tests%
+echo Failed:       %failed_tests%
+echo ======================================
+
+if %failed_tests% equ 0 (
+    echo.
+    echo ALL TESTS PASSED!
+    echo.
+) else (
+    echo.
+    echo SOME TESTS FAILED!
+    echo Check logs directory for details.
+    echo.
 )
 
-rem ============================================================
-rem  XSIM  -----------------------------------------------------
-:run_xsim_all
-echo %BLU%--- Testler XSIM ile koşturuluyor...%RST%
-for %%T in (%TESTS%) do (
-    for /f "tokens=1,2 delims=:" %%a in ("%%T") do (
-        call :run_xsim %%a %%b
-    )
-)
-goto :summary
+REM Cleanup
+del /q *.jou 2>nul
+del /q *.pb 2>nul
 
-rem ============================================================
-rem  ----- alt yordamlar --------------------------------------
-:run_msim
-set TB=%1
-set MOD=%2
-echo %BLU%[%%TB%%] %MOD%%RST%
-vlog -sv %%TB%%.sv > logs\%%MOD%%_tb_compile.log 2>&1 || (
-    echo   - Compile %RED%FAILED%RST%
-    goto :fail
-)
-vsim -c -do "run -all; quit" work.%%TB%% > logs\%%MOD%%_sim.log 2>&1
-findstr /C:"Test PASSED" /C:"SUCCESS" logs\%%MOD%%_sim.log >nul && (
-    echo   - Result %GREEN%PASSED%RST%
-    set /a PASS+=1
+pause
+exit /b %failed_tests%
+
+:run_test
+set tb_name=%1
+set module_name=%2
+set /a total_tests+=1
+
+echo.
+echo [%total_tests%] Testing %module_name%...
+
+REM Compile testbench
+xvlog -sv %tb_name%.sv > logs\%module_name%_tb_compile.log 2>&1
+if %errorlevel% neq 0 (
+    echo    - Compilation: FAILED
+    echo    - Check logs\%module_name%_tb_compile.log
+    set /a failed_tests+=1
     goto :eof
 )
-echo   - Result %RED%FAILED%RST%
-set /a FAIL+=1
-goto :eof
+echo    - Compilation: OK
 
-:run_xsim
-set TB=%1
-set MOD=%2
-echo %BLU%[%%TB%%] %MOD%%RST%
-xvlog -sv %%MOD%%.sv %%TB%%.sv > logs\%%MOD%%_compile.log 2>&1 || (
-    echo   - Compile %RED%FAILED%RST%
-    goto :fail
-)
-xelab work.%%TB%% > nul 2>&1 || goto :fail
-xsim   work.%%TB%% -R --runall > logs\%%MOD%%_sim.log 2>&1
-findstr /C:"Test PASSED" /C:"SUCCESS" logs\%%MOD%%_sim.log >nul && (
-    echo   - Result %GREEN%PASSED%RST%
-    set /a PASS+=1
+REM Elaborate
+xelab -debug typical -top %tb_name% -snapshot %tb_name%_snapshot > logs\%module_name%_elab.log 2>&1
+if %errorlevel% neq 0 (
+    echo    - Elaboration: FAILED
+    echo    - Check logs\%module_name%_elab.log
+    set /a failed_tests+=1
     goto :eof
 )
-echo   - Result %RED%FAILED%RST%
-set /a FAIL+=1
-goto :eof
+echo    - Elaboration: OK
 
-:fatal_rtl
-echo %RED%RTL derleme hatası – logs\rtl_compile.log dosyasına bak%RST%
-exit /b 1
+REM Run simulation
+echo    - Running simulation...
+xsim %tb_name%_snapshot -runall -log logs\%module_name%_sim.log > logs\%module_name%_xsim_output.log 2>&1
+if %errorlevel% neq 0 (
+    echo    - Simulation:  FAILED (crashed)
+    set /a failed_tests+=1
+    goto :eof
+)
 
-:summary
-set /a TOTAL=%PASS%+%FAIL%
-echo(
-echo %BLU%============ TEST SUMMARY ============%RST%
-echo   Toplam : %TOTAL%
-echo   Geçen  : %GREEN%%PASS%%RST%
-echo   Kalan  : %RED%%FAIL%%RST%
-echo %BLU%======================================%RST%
-exit /b 0
+REM Check for test results in simulation log
+findstr /C:"Test PASSED" /C:"SUCCESS" /C:"Test BAŞARILI" logs\%module_name%_sim.log >nul
+if %errorlevel% equ 0 (
+    echo    - Result:      PASSED
+    set /a passed_tests+=1
+) else (
+    findstr /C:"Test FAILED" /C:"ERROR" /C:"Test BAŞARISIZ" logs\%module_name%_sim.log >nul
+    if !errorlevel! equ 0 (
+        echo    - Result:      FAILED
+        set /a failed_tests+=1
+    ) else (
+        echo    - Result:      UNKNOWN (check log)
+        set /a failed_tests+=1
+    )
+)
 
-:fail
-set /a FAIL+=1
+REM Copy important results
+findstr /C:"Test" /C:"ERROR" /C:"SUCCESS" /C:"FAILED" /C:"BAŞARILI" logs\%module_name%_sim.log > test_results\%module_name%_summary.txt 2>nul
+
 goto :eof
