@@ -18,12 +18,14 @@ OBJ_DIR 		?= OBJ
 TARGET  		= $(BUILD_DIR)/program
 INC_FLAG 		+= -I./INC
 SRC_DIR 		= SRC
-LINKER_SCRIPT 	= linker.ld
+ENV_DIR 		= ENV
+STARTUP_SCRIPT 	= startup
+LINKER_SCRIPT 	= $(ENV_DIR)/linker.ld
 
 # Source files (hem .s hem .c)
 SRCS  = $(wildcard $(SRC_DIR)/*.s) $(wildcard $(SRC_DIR)/*.c)
-OBJS  = $(patsubst $(SRC_DIR)/%.s, $(OBJ_DIR)/%.o, $(filter %.s,$(SRCS))) \
-        $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(filter %.c,$(SRCS)))
+OBJS  = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(filter %.c,$(SRCS))) \
+        $(patsubst $(SRC_DIR)/%.s, $(OBJ_DIR)/%.o, $(filter %.s,$(SRCS)))
 
 # Flags
 ASFLAGS  = -march=$(RV_MODE) -mabi=$(MABI_MODE)
@@ -42,6 +44,9 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
 # Assembly dosyaları için kural
+$(OBJ_DIR)/$(STARTUP_SCRIPT).o: $(ENV_DIR)/$(STARTUP_SCRIPT).s | $(OBJ_DIR) $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c -o $@ $<
+	
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s | $(OBJ_DIR) $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
@@ -50,8 +55,8 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR) $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # Link
-$(TARGET).elf: $(OBJS) $(LINKER_SCRIPT) | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS)
+$(TARGET).elf: $(OBJ_DIR)/$(STARTUP_SCRIPT).o $(OBJS) $(LINKER_SCRIPT) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $(OBJ_DIR)/$(STARTUP_SCRIPT).o $(OBJS) $(LDFLAGS)
 
 # Generate disassembly
 dump: $(TARGET).elf | $(BUILD_DIR)

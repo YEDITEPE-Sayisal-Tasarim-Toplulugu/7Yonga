@@ -48,6 +48,7 @@ module tb_soc_top_v2();
     );
     
     assign uart0_rx = 1'b1;
+    assign qspi_di_w = 0;
     
     uart_monitor #(
         .CLK_FREQ_HZ                ( 1_000_000*50  ),

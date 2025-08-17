@@ -236,14 +236,14 @@ module core_data_top
     assign sram_data_wdata_w        = (arbiter_sel_w) ? axi_slave_data_wdata_w  : decoder1_data_wdata_w   ;
     
     assign axi_slave_data_gnt_w     = (arbiter_sel_w) ? sram_data_gnt_w         : 0 ;
-    assign axi_slave_data_rvalid_w  = (arbiter_sel_w) ? sram_data_rvalid_w      : 0 ;
+    assign axi_slave_data_rvalid_w  = (old_dec_sel_r) ? sram_data_rvalid_w      : 0 ;
     assign axi_slave_data_rdata_w   = sram_data_rdata_w;
     
     assign decoder1_data_gnt_w      = (arbiter_sel_w) ? 0 : sram_data_gnt_w    ;
-    assign decoder1_data_rvalid_w   = (arbiter_sel_w) ? 0 : sram_data_rvalid_w ;
+    assign decoder1_data_rvalid_w   = (old_dec_sel_r) ? 0 : sram_data_rvalid_w ;
     assign decoder1_data_rdata_w    = sram_data_rdata_w;
     
-    assign core_data_req_w          = (req_valid_w) ? core_data_req_i   : core_data_req_r  ;
+    assign core_data_req_w          = (req_valid_w) ? (core_data_req_i)  : core_data_req_r  ;
     assign core_data_addr_w         = (req_valid_w) ? core_data_addr_i  : core_data_addr_r ;
     assign core_data_we_w           = (req_valid_w) ? core_data_we_i    : core_data_we_r   ;
     assign core_data_be_w           = (req_valid_w) ? core_data_be_i    : core_data_be_r   ;

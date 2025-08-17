@@ -26,8 +26,8 @@ module soc_wrapper_vivado
         input wire resetn,
         input wire rx,
         output wire tx,
-        output wire qspi_sclk,
-        output wire qspi_cs_n,
+        output wire qspi_sclk_out,
+        output wire qspi_cs_n_out,
         inout wire [3:0] qspi_data
     );
     
@@ -41,9 +41,16 @@ module soc_wrapper_vivado
         .clk_i                      ( clk           )      // input clk_i
     );
     
-    logic [3:0] qspi_do_w;
-    logic [3:0] qspi_di_w;
-    logic [3:0] qspi_data_oen;
+    (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) logic [3:0] qspi_do_w;
+    (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) logic [3:0] qspi_di_w;
+    (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) logic [3:0] qspi_data_oen;
+    
+    (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) wire qspi_sclk;
+    (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) wire qspi_cs_n;
+
+    
+    assign qspi_sclk_out = qspi_sclk;
+    assign qspi_cs_n_out = qspi_cs_n;
     
     soc_top SOC (
         .clk_i                      ( clk_gen_w     ),

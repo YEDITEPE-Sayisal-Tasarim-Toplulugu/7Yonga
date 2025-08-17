@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-int QSPI_init(qspi_driver_t *driver, uint32_t base_addr, uint32_t system_clock, uint8_t prescaler) {
+int QSPI_init(qspi_driver_t *driver, uint32_t base_addr, uint32_t system_clock, uint32_t prescaler) {
     driver->base_addr = base_addr;
     driver->regs = (qspi_regs_t *)(base_addr);
     driver->system_clock = system_clock;
@@ -11,7 +11,7 @@ int QSPI_init(qspi_driver_t *driver, uint32_t base_addr, uint32_t system_clock, 
     return 0;
 }
 
-int QSPI_set_prescaler(qspi_driver_t *driver, uint8_t prescaler) {
+int QSPI_set_prescaler(qspi_driver_t *driver, uint32_t prescaler) {
     driver->prescaler = prescaler;
     return 0;
 }
@@ -43,13 +43,13 @@ int QSPI_send_command(qspi_driver_t *driver, QSPI_COMMAND cmd) {
     uint32_t ccr_data;
     uint32_t addr_data;
     ccr_data = 0;
-    ccr_data += (cmd.instruction & QSPI_CCR_INST_MASK)          << QSPI_CCR_INST_SHIFT;
-    ccr_data += (cmd.data_mode & QSPI_CCR_MODE_MASK)            << QSPI_CCR_MODE_SHIFT;
-    ccr_data += (cmd.data_direction & QSPI_CCR_DIRECTION_MASK)  << QSPI_CCR_DIRECTION_SHIFT;
-    ccr_data += (cmd.dummy_cycle_count & QSPI_CCR_DUMY_MASK)    << QSPI_CCR_DUMY_SHIFT;
-    ccr_data += (cmd.data_size & QSPI_CCR_SIZE_MASK)            << QSPI_CCR_SIZE_SHIFT;
-    ccr_data += (driver->prescaler & QSPI_CCR_PRESCALER_MASK)   << QSPI_CCR_PRESCALER_SHIFT;
-    ccr_data += (0 & QSPI_CCR_STA_MASK)                         << QSPI_CCR_STA_SHIFT;
+    ccr_data |= (cmd.instruction & QSPI_CCR_INST_MASK)          << QSPI_CCR_INST_SHIFT;
+    ccr_data |= (cmd.data_mode & QSPI_CCR_MODE_MASK)            << QSPI_CCR_MODE_SHIFT;
+    ccr_data |= (cmd.data_direction & QSPI_CCR_DIRECTION_MASK)  << QSPI_CCR_DIRECTION_SHIFT;
+    ccr_data |= (cmd.dummy_cycle_count & QSPI_CCR_DUMY_MASK)    << QSPI_CCR_DUMY_SHIFT;
+    ccr_data |= (cmd.data_size & QSPI_CCR_SIZE_MASK)            << QSPI_CCR_SIZE_SHIFT;
+    ccr_data |= (driver->prescaler & QSPI_CCR_PRESCALER_MASK)   << QSPI_CCR_PRESCALER_SHIFT;
+    ccr_data |= (0 & QSPI_CCR_STA_MASK)                         << QSPI_CCR_STA_SHIFT;
 
     addr_data = (cmd.addres & QSPI_ADR_DATA_MASK)               << QSPI_ADR_DATA_SHIFT;
 
@@ -60,7 +60,8 @@ int QSPI_send_command(qspi_driver_t *driver, QSPI_COMMAND cmd) {
 }
 
 int QSPI_wait_transaction(qspi_driver_t *driver) {
-    while (driver->regs->STA & 0x1) ;
+    while (!(driver->regs->STA & 0x1)) ;
+    while ((driver->regs->STA & 0x3) >> 1) ;
     return 0;
 };
 

@@ -1,7 +1,7 @@
 .section .text
-.global _start
+.global _startup
 
-_start:
+_startup:
     la sp, _estack
     
     # uart modulüne yazma
@@ -13,6 +13,8 @@ _start:
 
     la a0, string_hello_data
     jal ra, UART_send_string
+
+    call main
 
     j .              # terminate program
 

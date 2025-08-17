@@ -31,7 +31,7 @@ typedef struct {
     uint32_t base_addr;       // Base address of QSPI peripheral
     qspi_regs_t *regs;        // Pointer to QSPI registers
     uint32_t system_clock;    // System clock frequency in Hz
-    uint8_t prescaler;
+    uint32_t prescaler;
 } qspi_driver_t;
 
 typedef enum {
@@ -97,7 +97,7 @@ typedef struct
  * @param system_clock System clock frequency in Hz
  * @return 0 on success, -1 on error
  */
-int QSPI_init(qspi_driver_t *driver, uint32_t base_addr, uint32_t system_clock, uint8_t prescaler);
+int QSPI_init(qspi_driver_t *driver, uint32_t base_addr, uint32_t system_clock, uint32_t prescaler);
 
 /**
  * @brief Set QSPI clock prescaler
@@ -105,8 +105,9 @@ int QSPI_init(qspi_driver_t *driver, uint32_t base_addr, uint32_t system_clock, 
  * @param prescaler Prescaler value (0 = no division, 1 = divide by 2, etc.)
  * @return 0 on success, -1 on error
  */
-int QSPI_set_prescaler(qspi_driver_t *driver, uint8_t prescaler);
+int QSPI_set_prescaler(qspi_driver_t *driver, uint32_t prescaler);
 
+int QSPI_read_RES(qspi_driver_t *driver, QSPI_RESID_TYPE *res_type);
 int QSPI_send_command(qspi_driver_t *driver, QSPI_COMMAND cmd);
 int QSPI_wait_transaction(qspi_driver_t *driver);
 int QSPI_read_register(qspi_driver_t *driver, QSPI_REGISTER_DATA_TYPE *data, int i);

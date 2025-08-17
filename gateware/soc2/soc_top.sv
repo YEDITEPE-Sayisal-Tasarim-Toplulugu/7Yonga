@@ -197,7 +197,7 @@ module soc_top
         // PULP clock enable (only used if COREV_CLUSTER = 1)
         .pulp_clock_en_i        ( 1'b0),
         // Enable all clock gates for testing
-        .scan_cg_en_i           ( 1'b1),  
+        .scan_cg_en_i           ( 1'b0),  
         
         // Core ID, Cluster ID, debug mode halt address and boot address are considered more or less static
         .boot_addr_i            ( CORE_boot_addr_w              ),

@@ -1,5 +1,5 @@
 /* Entry Point */
-ENTRY(_start)
+ENTRY(_startup)
 
 /* Highest address of the user mode stack */
 _estack = ORIGIN(ram) + LENGTH(ram); /* end of "RAM" Ram type memory */
