@@ -21,6 +21,7 @@ SRC_DIR 		= SRC
 ENV_DIR 		= ENV
 STARTUP_SCRIPT 	= startup
 LINKER_SCRIPT 	= $(ENV_DIR)/linker.ld
+PRG_PARAMETERS += -DIMMEDIATELY_JUMP_TO_SRAM=1
 
 # Source files (hem .s hem .c)
 SRCS  = $(wildcard $(SRC_DIR)/*.s) $(wildcard $(SRC_DIR)/*.c)
@@ -29,7 +30,7 @@ OBJS  = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(filter %.c,$(SRCS))) \
 
 # Flags
 ASFLAGS  = -march=$(RV_MODE) -mabi=$(MABI_MODE)
-CFLAGS   = $(ASFLAGS) $(INC_FLAG) -nostdlib -ffreestanding -Wall -O2
+CFLAGS   = $(ASFLAGS) $(INC_FLAG) $(PRG_PARAMETERS) -nostdlib -ffreestanding -Wall -O2
 LDFLAGS  = $(ASFLAGS) -nostdlib -ffreestanding -T $(LINKER_SCRIPT)
 
 PYTHON   = python3

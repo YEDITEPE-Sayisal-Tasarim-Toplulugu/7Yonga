@@ -1,0 +1,113 @@
+#include "qspi_controller.h"
+
+#include <stdint.h>
+
+int QSPI_init(qspi_driver_t *driver, uint32_t base_addr, uint32_t system_clock, uint32_t prescaler) {
+    driver->base_addr = base_addr;
+    driver->regs = (qspi_regs_t *)(base_addr);
+    driver->system_clock = system_clock;
+    driver->prescaler = prescaler;
+
+    return 0;
+}
+
+int QSPI_set_prescaler(qspi_driver_t *driver, uint32_t prescaler) {
+    driver->prescaler = prescaler;
+    return 0;
+}
+
+// WRDI (Write Disable), WREN (Write Enable), CLSR (Clear Status Register-1), RESET (Software Reset), 
+int QSPI_send_single_instruction(qspi_driver_t *driver, uint8_t inst) {
+    QSPI_COMMAND cmd;
+
+    cmd.instruction         = inst;
+    cmd.data_mode           = QSPI_DATA_MODE_NONE;
+    cmd.data_direction      = QSPI_OP_READ;
+    cmd.dummy_cycle_count   = 0;    // dummy sıfır ise hiç göndermez.
+    cmd.data_size           = 0;
+    cmd.address             = 0;    // adres sıfır olmalı yoksa adres verisi de gönderiyor!
+
+    QSPI_send_command(driver, cmd);
+
+    return 0;
+}
+
+// WRR (Write Register – Status-1, Configuration-1) 
+int QSPI_send_instruction_and_bytes(qspi_driver_t *driver, uint8_t inst, uint8_t arr[], int size) {
+    QSPI_COMMAND cmd;
+
+    cmd.instruction         = inst;
+    cmd.data_mode           = QSPI_DATA_MODE_1X;
+    cmd.data_direction      = QSPI_OP_WRITE;
+    cmd.dummy_cycle_count   = 0;    // dummy sıfır ise hiç göndermez.
+    cmd.data_size           = size;
+    cmd.address             = 0;    // adres sıfır olmalı yoksa adres verisi de gönderiyor!
+
+    for (int i=0; i<size; i++) {
+        QSPI_write_register_inbyte(driver, arr[i], i);
+    }
+
+    QSPI_send_command(driver, cmd);
+
+    return 0;
+}
+
+int QSPI_send_command(qspi_driver_t *driver, QSPI_COMMAND cmd) {
+    uint32_t ccr_data;
+    uint32_t addr_data;
+    ccr_data = 0;
+    ccr_data |= (cmd.instruction & QSPI_CCR_INST_MASK)                          << QSPI_CCR_INST_SHIFT;
+    ccr_data |= (cmd.data_mode & QSPI_CCR_MODE_MASK)                            << QSPI_CCR_MODE_SHIFT;
+    ccr_data |= (cmd.data_direction & QSPI_CCR_DIRECTION_MASK)                  << QSPI_CCR_DIRECTION_SHIFT;
+    ccr_data |= (cmd.dummy_cycle_count & QSPI_CCR_DUMY_MASK)                    << QSPI_CCR_DUMY_SHIFT;
+    if (cmd.data_size == 0) ccr_data |= (cmd.data_size & QSPI_CCR_SIZE_MASK)    << QSPI_CCR_SIZE_SHIFT;
+    else ccr_data |= ((cmd.data_size-1) & QSPI_CCR_SIZE_MASK)                   << QSPI_CCR_SIZE_SHIFT;
+    ccr_data |= (driver->prescaler & QSPI_CCR_PRESCALER_MASK)                   << QSPI_CCR_PRESCALER_SHIFT;
+    ccr_data |= (0 & QSPI_CCR_STA_MASK)                                         << QSPI_CCR_STA_SHIFT;
+
+    addr_data = (cmd.address & QSPI_ADR_DATA_MASK)                              << QSPI_ADR_DATA_SHIFT;
+
+    QSPI_send_ADR(driver, addr_data);
+    QSPI_send_CCR(driver, ccr_data);
+
+    return 0;
+}
+
+int QSPI_wait_transaction(qspi_driver_t *driver) {
+    while (!(driver->regs->STA & 0x1)) ;
+    while ((driver->regs->STA & 0x3) >> 1) ;
+    return 0;
+};
+
+int QSPI_write_register_inbyte(qspi_driver_t *driver, uint8_t data, int index) {
+    QSPI_REGISTER_DATA_TYPE reg_data;
+    QSPI_read_register(driver, &reg_data, index);
+    QSPI_REGISTER_WRITE_BYTE(reg_data, data, index);
+    return 0;
+}
+
+uint8_t QSPI_read_register_inbyte(qspi_driver_t *driver, int index) {
+    QSPI_REGISTER_DATA_TYPE reg_data;
+    uint8_t ret_data;
+    QSPI_read_register(driver, &reg_data, index);
+    ret_data = QSPI_REGISTER_READ_BYTE(reg_data, index);
+    return ret_data;
+}
+
+int QSPI_read_register(qspi_driver_t *driver, QSPI_REGISTER_DATA_TYPE *data, int i) {
+    if ((i < 0) || (7 < i)) return -1;
+    else {
+        *data = *(((QSPI_REGISTER_DATA_TYPE *)(driver->regs->DR0) + i));
+        return 0;
+    }
+}
+
+int QSPI_send_CCR(qspi_driver_t *driver, uint32_t ccr_data) {
+    driver->regs->CCR = ccr_data;
+    return 0;
+}
+
+int QSPI_send_ADR(qspi_driver_t *driver, uint32_t adr_data) {
+    driver->regs->ADR = adr_data;
+    return 0;
+}

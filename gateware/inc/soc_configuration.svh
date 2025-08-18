@@ -14,12 +14,19 @@ parameter int USE_SOFT_MEMORY_MODULES           = 1;
 parameter int USE_SOFT_ROM_MODULES              = 1;
 parameter int USE_BRAM_MEMORY_MODULES           = 0;
 parameter CLOCK_GATE_TYPE USE_CLOCK_GATE_TYPE   = BYPASS;
+parameter UART_PROGRAMMER_EXISTS                = 1;
 `else
 parameter int USE_SOFT_MEMORY_MODULES           = 0;
 parameter int USE_SOFT_ROM_MODULES              = 1;
 parameter int USE_BRAM_MEMORY_MODULES           = 1;
 parameter CLOCK_GATE_TYPE USE_CLOCK_GATE_TYPE   = VIVADOBUF;
+parameter UART_PROGRAMMER_EXISTS                = 1;
 `endif
+
+parameter UART_PROGRAMMER_BAUDE_RATE            = 9600;
+
+// SOC
+parameter int SOC_FREQUENCY_HZ                  = 1_000_000*50;
 
 // CORE
 parameter int CORE_BOOT_ADDR                    = 32'h0000_0000;

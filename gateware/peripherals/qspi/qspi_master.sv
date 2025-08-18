@@ -383,6 +383,10 @@ module qspi_master #(
                             qspi_cs_no <= 1'b0;
                             shift_reg_tx <= qspi_ccr.instruction;
                             busy <= 1'b1;
+                            
+                            qspi_data_o[0] <= qspi_ccr.instruction[7];
+                            shift_reg_tx <= {qspi_ccr.instruction[6:0], 1'b0};
+                            bit_cnt <= bit_cnt + 4'd1;
                         end
                     end
                     

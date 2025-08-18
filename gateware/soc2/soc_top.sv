@@ -26,18 +26,23 @@ module soc_top
     import soc_addr_rules_pkg::*;
     import soc_config_pkg::*; 
     (
-        input logic clk_i, reset_ni,
+        input   logic clk_i, reset_ni,
+        
+        // UART Programmmer
+        input   logic programmer_reset_ni,
+        input   logic programmer_enable_i,
+        input   logic programmer_rx,
         
         // UART Interface
         output  logic                       peripheral_uart_tx_o, 
         input   logic                       peripheral_uart_rx_i,
         
         // QSPI Interface
-        output logic                        peripheral_qspi_sclk_o,
-        output logic                        peripheral_qspi_cs_no,
-        output logic [3:0]                  peripheral_qspi_data_o,
-        input  logic [3:0]                  peripheral_qspi_data_i,
-        output logic [3:0]                  peripheral_qspi_data_oen   // Output enable (0: output, 1: input)
+        output  logic                        peripheral_qspi_sclk_o,
+        output  logic                        peripheral_qspi_cs_no,
+        output  logic [3:0]                  peripheral_qspi_data_o,
+        input   logic [3:0]                  peripheral_qspi_data_i,
+        output  logic [3:0]                  peripheral_qspi_data_oen   // Output enable (0: output, 1: input)
     );
     
     localparam integer INST_MEMORY_SIZE_IN_KB   = 8;
@@ -181,6 +186,36 @@ module soc_top
     logic [AXI_SLAVE_COUNT-1:0]             m_axi_rvalid;
     logic [AXI_SLAVE_COUNT-1:0]             m_axi_rready;
     
+    logic mem_write_enable_w;
+    logic [31:0] mem_write_addr_w;
+    logic [31:0] mem_write_data_w;
+    
+generate
+    if (soc_config_pkg::UART_PROGRAMMER_EXISTS) begin : UART_PROGRAMMER
+        uart_programmer_top
+        #( 
+            .FREQ_HZ                    ( soc_config_pkg::SOC_FREQUENCY_HZ                      ),
+            .PROGRAMMER_BAUDE_RATE      ( soc_config_pkg::UART_PROGRAMMER_BAUDE_RATE            ),
+            .MEM_START_ADDR             ( soc_addr_rules_pkg::INST_SRAM_ADDR_RULE.start_addr    ),
+            .MEM_INC_COUNT              ( 4                                                     )
+        ) PROGRAMMER_MODULE (
+            .clk_i                      ( clk_i                             ),
+            .reset_ni                   ( programmer_reset_ni               ),
+            
+            .programmer_enable_i        ( programmer_enable_i               ),
+            .programmer_rx              ( programmer_rx                     ),
+            
+            .mem_write_enable_o         ( mem_write_enable_w                ),
+            .mem_write_addr_o           ( mem_write_addr_w                  ),
+            .mem_write_data_o           ( mem_write_data_w                  )
+        );
+    end else begin
+        assign mem_write_enable_w   = 0;
+        assign mem_write_addr_w     = 0;
+        assign mem_write_data_w     = 0;
+    end
+endgenerate
+    
     cv32e40p_top #(
         .COREV_PULP         (soc_config_pkg::CORE_CONF_COREV_PULP),  // PULP ISA Extension (incl. custom CSRs and hardware loop, excl. cv.elw)
         .COREV_CLUSTER      (soc_config_pkg::CORE_CONF_COREV_CLUSTER),  // PULP Cluster interface (incl. cv.elw)
@@ -191,8 +226,8 @@ module soc_top
         .NUM_MHPMCOUNTERS   (soc_config_pkg::CORE_CONF_NUM_MHPMCOUNTERS)
     ) CORE_CV32E40P (
         // Clock and Reset
-        .clk_i                  (clk_i                          ),
-        .rst_ni                 (reset_ni                       ),
+        .clk_i                  ( clk_i                         ),
+        .rst_ni                 ( reset_ni                      ),
         
         // PULP clock enable (only used if COREV_CLUSTER = 1)
         .pulp_clock_en_i        ( 1'b0),
@@ -252,6 +287,11 @@ module soc_top
         .S_STRB_WIDTH                   ( AXI_STRB_WIDTH            )
     ) CORE_INSTRUCTION_TOP (
         .clk_i(clk_i), .reset_ni(reset_ni),
+        
+        // programmer_port
+        .programmer_mem_write_enable_i  ( mem_write_enable_w    ),
+        .programmer_mem_write_addr_i    ( mem_write_addr_w      ),
+        .programmer_mem_write_data_i    ( mem_write_data_w      ),
         
         .core_instr_addr_i              ( core_instr_addr_w     ),
         .core_instr_req_i               ( core_instr_req_w      ),

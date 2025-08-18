@@ -14,6 +14,11 @@ _startup:
     la a0, string_hello_data
     jal ra, UART_send_string
 
+# eğer uart programmer varsa doğrudan atlama yapılır
+#ifdef IMMEDIATELY_JUMP_TO_SRAM
+    li a0, 0x00000800       # sram start
+    jalr x0, 0(a0)
+#endif
     call main
 
     j .              # terminate program

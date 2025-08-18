@@ -39,6 +39,10 @@ module core_inst_top_v2
     (
         input   logic                       clk_i, reset_ni,
         
+        input   logic                       programmer_mem_write_enable_i,
+        input   logic [31:0]                programmer_mem_write_addr_i,
+        input   logic [31:0]                programmer_mem_write_data_i,
+        
         input   logic [CORE_ADDR_WIDTH-1:0] core_instr_addr_i,
         input   logic                       core_instr_req_i,
         output  logic                       core_instr_gnt_o,
@@ -352,6 +356,25 @@ module core_inst_top_v2
         .instr_rdata_o          ( DECODER1_data_rdata_w     )
     );
     
+    logic [CORE_ADDR_WIDTH-1:0] INSTRUCTION_MEMORY_data_addr_w;
+    logic                       INSTRUCTION_MEMORY_data_req_w;
+    logic                       INSTRUCTION_MEMORY_data_we_w;
+    logic [CORE_BE_WIDTH-1:0]   INSTRUCTION_MEMORY_data_be_w;
+    logic [CORE_DATA_WIDTH-1:0] INSTRUCTION_MEMORY_data_wdata_w;
+    logic                       INSTRUCTION_MEMORY_data_gnt_w;
+    logic                       INSTRUCTION_MEMORY_data_rvalid_w;
+    logic [CORE_DATA_WIDTH-1:0] INSTRUCTION_MEMORY_data_rdata_w;
+    
+    assign INSTRUCTION_MEMORY_data_addr_w   = (programmer_mem_write_enable_i) ? programmer_mem_write_addr_i : DECODER2_data_addr_w ;
+    assign INSTRUCTION_MEMORY_data_req_w    = (programmer_mem_write_enable_i) ? 1'b1 : DECODER2_data_req_w  ;
+    assign INSTRUCTION_MEMORY_data_we_w     = (programmer_mem_write_enable_i) ? 1'b1 : DECODER2_data_we_w   ;
+    assign INSTRUCTION_MEMORY_data_be_w     = (programmer_mem_write_enable_i) ? {(CORE_BE_WIDTH){1'b1}}: DECODER2_data_be_w   ;
+    assign INSTRUCTION_MEMORY_data_wdata_w  = (programmer_mem_write_enable_i) ? programmer_mem_write_data_i : DECODER2_data_wdata_w;
+    
+    assign DECODER2_data_gnt_w              = (programmer_mem_write_enable_i) ? 0 : INSTRUCTION_MEMORY_data_gnt_w;   
+    assign DECODER2_data_rvalid_w           = (programmer_mem_write_enable_i) ? 0 : INSTRUCTION_MEMORY_data_rvalid_w;
+    assign DECODER2_data_rdata_w            = (programmer_mem_write_enable_i) ? 0 : INSTRUCTION_MEMORY_data_rdata_w; 
+    
     inst_memory #(
         .SIZE_IN_KB             ( INST_MEMORY_SIZE_IN_KB    ),
         .ADDR_WIDTH             ( CORE_ADDR_WIDTH           ),
@@ -360,14 +383,14 @@ module core_inst_top_v2
     ) INSTRUCTION_MEMORY (
         .clk_i(clk_i), .reset_ni(reset_ni),
 
-        .data_addr_i            ( DECODER2_data_addr_w      ),
-        .data_req_i             ( DECODER2_data_req_w       ),
-        .data_we_i              ( DECODER2_data_we_w        ),
-        .data_be_i              ( DECODER2_data_be_w        ),
-        .data_wdata_i           ( DECODER2_data_wdata_w     ),
-        .data_gnt_o             ( DECODER2_data_gnt_w       ),
-        .data_rvalid_o          ( DECODER2_data_rvalid_w    ),
-        .data_rdata_o           ( DECODER2_data_rdata_w     )
+        .data_addr_i            ( INSTRUCTION_MEMORY_data_addr_w    ),
+        .data_req_i             ( INSTRUCTION_MEMORY_data_req_w     ),
+        .data_we_i              ( INSTRUCTION_MEMORY_data_we_w      ),
+        .data_be_i              ( INSTRUCTION_MEMORY_data_be_w      ),
+        .data_wdata_i           ( INSTRUCTION_MEMORY_data_wdata_w   ),
+        .data_gnt_o             ( INSTRUCTION_MEMORY_data_gnt_w     ),
+        .data_rvalid_o          ( INSTRUCTION_MEMORY_data_rvalid_w  ),
+        .data_rdata_o           ( INSTRUCTION_MEMORY_data_rdata_w   )
     );
     
 `ifdef ASSERTIONS

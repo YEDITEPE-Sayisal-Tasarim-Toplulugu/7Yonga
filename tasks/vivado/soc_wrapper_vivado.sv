@@ -28,10 +28,15 @@ module soc_wrapper_vivado
         output wire tx,
         output wire qspi_sclk_out,
         output wire qspi_cs_n_out,
-        inout wire [3:0] qspi_data
+        inout wire [3:0] qspi_data,
+        input wire programmer_mode
+        , output wire clk_o
     );
     
+    logic reset_ni;
     logic clk_gen_w;
+    
+    assign clk_o = clk_gen_w;
     
     clk_gen CLOCK_GENERATOR
     (
@@ -52,19 +57,26 @@ module soc_wrapper_vivado
     assign qspi_sclk_out = qspi_sclk;
     assign qspi_cs_n_out = qspi_cs_n;
     
+    assign reset_ni = /*(~programmer_mode) & */ resetn;
+    
     soc_top SOC (
-        .clk_i                      ( clk_gen_w     ),
-        .reset_ni                   ( resetn        ),
+        .clk_i                      ( clk_gen_w         ),
+        .reset_ni                   ( reset_ni          ),
         
-        .peripheral_uart_tx_o       ( tx            ), 
-        .peripheral_uart_rx_i       ( rx            ),
+        // UART Programmmer
+        .programmer_reset_ni        ( resetn            ),
+        .programmer_enable_i        ( programmer_mode   ),
+        .programmer_rx              ( rx                ),
+        
+        .peripheral_uart_tx_o       ( tx                ), 
+        .peripheral_uart_rx_i       ( rx                ),
         
         // QSPI Interface
-        .peripheral_qspi_sclk_o     ( qspi_sclk     ),
-        .peripheral_qspi_cs_no      ( qspi_cs_n     ),
-        .peripheral_qspi_data_o     ( qspi_do_w     ),
-        .peripheral_qspi_data_i     ( qspi_di_w     ),
-        .peripheral_qspi_data_oen   ( qspi_data_oen )
+        .peripheral_qspi_sclk_o     ( qspi_sclk         ),
+        .peripheral_qspi_cs_no      ( qspi_cs_n         ),
+        .peripheral_qspi_data_o     ( qspi_do_w         ),
+        .peripheral_qspi_data_i     ( qspi_di_w         ),
+        .peripheral_qspi_data_oen   ( qspi_data_oen     )
     );
     
     generate

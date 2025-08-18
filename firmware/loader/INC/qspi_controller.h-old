@@ -1,17 +1,17 @@
 
-#ifndef __QSPI_FLASH_CONTROLLER_H__
-#define __QSPI_FLASH_CONTROLLER_H__
+#ifndef __QSPI_CONTROLLER_H__
+#define __QSPI_CONTROLLER_H__
 
 #include <stdint.h>
 
-#define FLASH_ReadIdentification           0x90
-
-#define QSPI_REGISTER_DATA_TYPE             uint32_t
-
-typedef struct {
-    uint8_t ManufactureID;
-    uint8_t DeviceID;
-} QSPI_RESID_TYPE;
+#define QSPI_REGISTER_DATA_TYPE                 uint32_t
+#define BYTE_INDEX_2_REG_ADDR(i)                ((i) / sizeof(QSPI_REGISTER_DATA_TYPE))
+#define BYTE_INDEX_2_REG_SHIFT(i)               (((i) % sizeof(QSPI_REGISTER_DATA_TYPE))*8)
+#define QSPI_REGISTER_WRITE_BYTE(o, b, i)                                      \
+    ( ((o) & ~(0xFFu << BYTE_INDEX_2_REG_SHIFT(i))) |                          \
+      (((uint32_t)(b) & 0xFFu) << BYTE_INDEX_2_REG_SHIFT(i)) )
+#define QSPI_REGISTER_READ_BYTE(o, i) \
+    ( (uint8_t)(((o) >> BYTE_INDEX_2_REG_SHIFT(i)) & 0xFFu) )
 
 typedef struct {
     volatile uint32_t CCR;    // 0x00 - Communication configuration register
@@ -53,7 +53,7 @@ typedef struct
     qspi_operation_t    data_direction;
     uint32_t            data_size;
     uint32_t            dummy_cycle_count;
-    uint32_t            addres;
+    uint32_t            address;
 } QSPI_COMMAND;
 
 #define QSPI_STA_COMPLETE    (1U << 0)  // Transaction complete
@@ -107,11 +107,16 @@ int QSPI_init(qspi_driver_t *driver, uint32_t base_addr, uint32_t system_clock, 
  */
 int QSPI_set_prescaler(qspi_driver_t *driver, uint32_t prescaler);
 
-int QSPI_read_RES(qspi_driver_t *driver, QSPI_RESID_TYPE *res_type);
+// WRDI (Write Disable), WREN (Write Enable), CLSR (Clear Status Register-1), RESET (Software Reset), 
+int QSPI_send_single_instruction(qspi_driver_t *driver, uint8_t inst);
+// WRR (Write Register – Status-1, Configuration-1) 
+int QSPI_send_instruction_and_bytes(qspi_driver_t *driver, uint8_t inst, uint8_t arr[], int size);
 int QSPI_send_command(qspi_driver_t *driver, QSPI_COMMAND cmd);
 int QSPI_wait_transaction(qspi_driver_t *driver);
+int QSPI_write_register_inbyte(qspi_driver_t *driver, uint8_t data, int index);
+uint8_t QSPI_read_register_inbyte(qspi_driver_t *driver, int index);
 int QSPI_read_register(qspi_driver_t *driver, QSPI_REGISTER_DATA_TYPE *data, int i);
 int QSPI_send_CCR(qspi_driver_t *driver, uint32_t ccr_data);
 int QSPI_send_ADR(qspi_driver_t *driver, uint32_t adr_data);
 
-#endif // __QSPI_FLASH_CONTROLLER_H__
+#endif // __QSPI_CONTROLLER_H__
