@@ -23,7 +23,7 @@
 
 module tb_soc_wrapper_vivado();
 
-    `SIM_CLK_RST(10, 5, 500_000)
+    `SIM_CLK_RST(10, 5, 500_000_000)
     
     localparam FREQ_HZ                     = 1_000_000 * 50;
     localparam PROGRAMMER_BAUDE_RATE       = 9600;
@@ -120,6 +120,7 @@ module tb_soc_wrapper_vivado();
         $display("[SIM] transmit done.");
         
         `RST = 0;
+        programmer_mode = 0;
         @(posedge clk_w);
         `RST = 1;
         
