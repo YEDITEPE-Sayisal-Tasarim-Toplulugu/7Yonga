@@ -209,7 +209,7 @@ module uart (
                     default:  s_axi_rdata <= 32'd0;
                 endcase
                 
-                $display("Reading address 0x%h, value = 0x%h", axi_araddr, s_axi_rdata);
+                // $display("Reading address 0x%h, value = 0x%h", axi_araddr, s_axi_rdata);
             end else if (s_axi_rvalid && s_axi_rready) begin
                 s_axi_rvalid <= 1'b0;
             end
@@ -248,7 +248,7 @@ module uart (
                     tx_counter <= 32'd0;
                     tx_bit_idx <= 3'd0;
                     
-                    if (uart_cfg_reg[0] && (tx_data_updated || !tx_active)) begin
+                    if (uart_cfg_reg[0] && ~uart_cfg_reg[2] && ~tx_done && (tx_data_updated || !tx_active)) begin
                         tx_active <= 1'b1;
                         tx_state <= START;
                         $display("TX: Starting transmission of 0x%h", uart_tdr_reg[7:0]);
@@ -325,7 +325,9 @@ module uart (
                     rx_counter <= 32'd0;
                     rx_bit_idx <= 3'd0;
                     
-                    if (uart_rx == 1'b0 && !rx_active) begin
+                    if (uart_rx == 1'b0 && !rx_active & 
+                        ~(rx_done | rx_data_updated | uart_cfg_reg[1])
+                    ) begin
                         rx_state <= START;
                         rx_active <= 1'b1;
                         $display("RX: Start bit detected");

@@ -30,9 +30,23 @@ typedef enum {
     UART_STOP_BITS_2   = 2   // 2 stop bits (any value >= 2)
 } uart_stop_bits_t;
 
-#define UART_CFG_TX_ENABLE      (1U << 0)  // Transmit enable
-#define UART_CFG_RX_RECEIVED    (1U << 1)  // Data received flag (set by HW, clear by SW)
-#define UART_CFG_TX_COMPLETED   (1U << 2)  // Transmit completed flag (set by HW, clear by SW)
+#define PRINT_INT_ARRAY_SIZE                        16
+
+#define UART_CFG_TX_ENABLE                          (1U << 0)  // Transmit enable
+#define UART_CFG_RX_RECEIVED                        (1U << 1)  // Data received flag (set by HW, clear by SW)
+#define UART_CFG_TX_COMPLETED                       (1U << 2)  // Transmit completed flag (set by HW, clear by SW)
+
+#define UART_CFG_READ_TX_ENABLE(CFG_DATA)           ( ( CFG_DATA >> 0 ) & 0x1 )
+#define UART_CFG_READ_RX_RECEIVED(CFG_DATA)         ( ( CFG_DATA >> 1 ) & 0x1 )
+#define UART_CFG_READ_TX_COMPLETED(CFG_DATA)        ( ( CFG_DATA >> 2 ) & 0x1 )
+
+#define UART_CFG_CLEAR_TX_ENABLE(CFG_DATA)          ( CFG_DATA & ~( 0x1 << 0 ) )
+#define UART_CFG_CLEAR_RX_RECEIVED(CFG_DATA)        ( CFG_DATA & ~( 0x1 << 1 ) )
+#define UART_CFG_CLEAR_TX_COMPLETED(CFG_DATA)       ( CFG_DATA & ~( 0x1 << 2 ) )
+
+#define UART_CFG_SET_TX_ENABLE(CFG_DATA)            ( CFG_DATA | ( 0x1 << 0 ) )
+#define UART_CFG_SET_RX_RECEIVED(CFG_DATA)          ( CFG_DATA | ( 0x1 << 1 ) )
+#define UART_CFG_SET_TX_COMPLETED(CFG_DATA)         ( CFG_DATA | ( 0x1 << 2 ) )
 
 #define UART_BAUD_9600      9600
 #define UART_BAUD_19200     19200
@@ -43,8 +57,6 @@ typedef enum {
 #define UART_BAUD_460800    460800
 #define UART_BAUD_921600    921600
 #define UART_BAUD_1000000   1000000
-
-
 
 /**
  * @brief Initialize UART driver
@@ -71,6 +83,8 @@ int uart_set_baud_rate(uart_driver_t *driver, uint32_t baud_rate);
  */
 int uart_set_stop_bits(uart_driver_t *driver, uart_stop_bits_t stop_bits);
 
+void uart_send_tx_valid(uart_driver_t *driver);
+
 /**
  * @brief Send a single byte via UART
  * @param driver Pointer to UART driver structure
@@ -78,6 +92,14 @@ int uart_set_stop_bits(uart_driver_t *driver, uart_stop_bits_t stop_bits);
  * @return 0 on success, -1 on error
  */
 int uart_send_byte(uart_driver_t *driver, uint8_t data);
+
+/**
+ * @brief Send a single byte via UART and wait for tx complate
+ * @param driver Pointer to UART driver structure
+ * @param data Byte to send
+ * @return 0 on success, -1 on error
+ */
+int uart_send_byte_and_wait(uart_driver_t *driver, uint8_t data);
 
 /**
  * @brief Send a string via UART
@@ -143,6 +165,8 @@ void uart_clear_rx_flag(uart_driver_t *driver);
  * @param driver Pointer to UART driver structure
  */
 void uart_clear_tx_flag(uart_driver_t *driver);
+
+int uart_is_ready(uart_driver_t *driver);
 
 //================================================================
 // Printf-style Functions

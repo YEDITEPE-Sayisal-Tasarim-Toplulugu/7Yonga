@@ -1,7 +1,3 @@
-gateware/core_old
-# core repo:
-gateware/core/cv32e40p
-gateware/core_old/cv32e40p
 # Kurulum için:
 #   "gateware/core/Makefile"'ı, 
 #   "make setup" ile yürüt
@@ -11,7 +7,8 @@ gateware/core/build
 gateware/core/obj_dir
 
 # repolar:
-gateware/axi4/axi
-gateware/pulp_common_cell/common_cells
 gateware/axi4_v2/verilog-axi
+gateware/core/cv32e40p
+gateware/plic/plic
 
+.vscode

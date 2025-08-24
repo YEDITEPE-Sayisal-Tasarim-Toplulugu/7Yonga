@@ -199,7 +199,7 @@ module soc_top
         // Core Intsruction Interface
         .CORE_inst_inf_i(CORE_instr_intf),
         
-        .slv(AXI4_Slaves[AXI4_SLAVE_INST_SRAM_ID])
+        .axi_slv(AXI4_Slaves[AXI4_SLAVE_INST_SRAM_ID])
     );
     
     core_data_top

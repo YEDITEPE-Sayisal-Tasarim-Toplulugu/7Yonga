@@ -65,7 +65,7 @@ module qspi_master #(
 
     // Internal Registers
     qspi_ccr_t  qspi_ccr;
-    logic [23:0] qspi_adr;
+    logic [31:0] qspi_adr;
     logic [31:0] qspi_dr[8];
     logic        transaction_complete;
     logic        busy;
@@ -184,7 +184,7 @@ module qspi_master #(
                 
                 case (read_addr)
                     REG_QSPI_CCR: s_axi_rdata <= qspi_ccr;
-                    REG_QSPI_ADR: s_axi_rdata <= {8'h00, qspi_adr};
+                    REG_QSPI_ADR: s_axi_rdata <= qspi_adr;
                     REG_QSPI_DR0: s_axi_rdata <= qspi_dr[0];
                     REG_QSPI_DR1: s_axi_rdata <= qspi_dr[1];
                     REG_QSPI_DR2: s_axi_rdata <= qspi_dr[2];
@@ -353,7 +353,7 @@ module qspi_master #(
                         qspi_ccr <= s_axi_wdata;
                         start_transaction <= 1'b1;
                     end
-                    REG_QSPI_ADR: qspi_adr <= s_axi_wdata[23:0];
+                    REG_QSPI_ADR: qspi_adr <= s_axi_wdata;
                     REG_QSPI_DR0: qspi_dr[0] <= s_axi_wdata;
                     REG_QSPI_DR1: qspi_dr[1] <= s_axi_wdata;
                     REG_QSPI_DR2: qspi_dr[2] <= s_axi_wdata;
@@ -383,6 +383,10 @@ module qspi_master #(
                             qspi_cs_no <= 1'b0;
                             shift_reg_tx <= qspi_ccr.instruction;
                             busy <= 1'b1;
+                            
+                            qspi_data_o[0] <= qspi_ccr.instruction[7];
+                            shift_reg_tx <= {qspi_ccr.instruction[6:0], 1'b0};
+                            bit_cnt <= bit_cnt + 4'd1;
                         end
                     end
                     

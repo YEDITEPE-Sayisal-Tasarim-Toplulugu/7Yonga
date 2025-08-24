@@ -6,21 +6,22 @@
 
 package soc_addr_rules_pkg;
 
+typedef logic [3:0] id_t; 
 typedef logic [31:0] addr_t; 
-    
+
 typedef struct packed {
-    addr_t       start_addr;
-    addr_t       end_addr;
+    addr_t      start_addr;
+    addr_t      end_addr;
 } addr_rule_t;
 
 localparam addr_rule_t ROM_ADDR_RULE = '{
-    32'h1000_0000,
-    32'h1000_0400
+    32'h0000_0000,
+    32'h0000_0800
 };
 
 localparam addr_rule_t INST_SRAM_ADDR_RULE = '{
-    32'h4000_0000,
-    32'h4000_2000
+    32'h0700_0000,
+    32'h0700_2000
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28,26 +29,26 @@ localparam addr_rule_t INST_SRAM_ADDR_RULE = '{
 // çekirdekten gelen istek data memory'e gidecekse <DATA_SRAM_ADDR_RULE> adresi aralığını kullanır
 // çekirdekten gelen istek diğer modüllere gidecekse <AXI_MASTER_ADDR_RULE> adresi aralığını kullanır
 localparam addr_rule_t DATA_SRAM_ADDR_RULE = '{
-    32'h3000_0000,
-    32'h3000_2000
+    32'h2000_0000,
+    32'h2000_2000
 };
 
 localparam addr_rule_t AXI_MASTER_ADDR_RULE = '{
-    32'h4000_0000,
-    32'h7F00_0000
+    32'h0000_0000,
+    32'h1FFF_0000
 };
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 localparam addr_rule_t PERIPHERALS_TOP_ADDR_RULE = '{
-    32'h7000_0000,
-    32'h7F00_0000
+    32'h1000_0000,
+    32'h1FFF_0000
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // AXI4-Lite Çevre Birimleri Adres Kuralları
 localparam addr_rule_t AXIL_UART_ADDR_RULE = '{
-    32'h7100_0000,
-    32'h7100_0030
+    32'h0001_0000,
+    32'h0001_0030
 };
 
 endpackage

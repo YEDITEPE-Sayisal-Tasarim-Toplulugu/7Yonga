@@ -1,8 +1,9 @@
-REPO_URL := https://github.com/pulp-platform/axi.git
+REPO_URL := https://github.com/RoaLogic/plic.git
 REPO_DIR := $(pwd)
-CORE_NAME = axi
 
 .PHONY: setup
+
+all: setup
 
 setup:
 	@if [ ! -d "$(REPO_DIR)" ]; then \
@@ -10,3 +11,4 @@ setup:
 	else \
 		echo "$(REPO_DIR) already exists. Skipping clone."; \
 	fi
+

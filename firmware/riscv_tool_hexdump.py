@@ -18,6 +18,9 @@ if (os.path.isfile(binFile)):
         
     hexdFile_op = open(ofile, 'w')
     i=0
+
+    print("Byte:", len(binData))
+
     while (i < len(binData)):
         dat = binData[i : i+4]
         dst = "%02x%02x%02x%02x\n" % ((dat[3] if (len(dat) > 3) else 0), (dat[2] if (len(dat) > 2) else 0), (dat[1] if (len(dat) > 1) else 0), dat[0])
