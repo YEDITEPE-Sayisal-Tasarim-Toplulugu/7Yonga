@@ -16,7 +16,7 @@ _estack = ORIGIN(DMEM) + LENGTH(DMEM); /* end of "DMEM" Ram type memory */
 MEMORY
 {
     /* Bellek bölgeleri */
-    IMEM (rx)  : ORIGIN = 0x00000800, LENGTH = 8K    /* Kod ve sabit veri */
+    IMEM (rx)  : ORIGIN = 0x07000000, LENGTH = 8K    /* Kod ve sabit veri */
     DMEM (rwx) : ORIGIN = 0x20000000, LENGTH = 8K    /* Çalışma zamanı veri, stack, heap */
 }
 

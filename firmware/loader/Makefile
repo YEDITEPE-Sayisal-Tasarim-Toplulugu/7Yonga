@@ -9,7 +9,7 @@ OBJCOPY 		= $(CROSS_COMPILE)objcopy
 PY_BIN_PARSER	?= ../riscv_tool_hexdump.py
 
 # Architecture settings
-RV_MODE   		= rv32i
+RV_MODE   		= rv32izicsr
 MABI_MODE 		= ilp32
 
 # Project settings

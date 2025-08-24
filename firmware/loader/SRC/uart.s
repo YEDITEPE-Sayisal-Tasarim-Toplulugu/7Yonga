@@ -37,4 +37,56 @@ UART_send_string:
     lw s0, 4(sp)
     addi sp, sp, 12
     ret
-    
+
+    .global UART_send_reg_hex
+# void UART_send_reg_hex(uint32_t value, const char *prefix)
+UART_send_reg_hex:
+    addi sp, sp, -32
+    sw ra, 28(sp)
+    sw s0, 24(sp)
+    sw s1, 20(sp)
+
+    mv s0, a0       # value
+    mv s1, a1       # prefix
+
+    # prefix yazdır
+    mv a0, s1
+    jal ra, UART_send_string
+
+    # hex için buffer hazırla
+    la t0, hex_buffer
+    li t1, 8         # 8 digit (32-bit)
+
+1:  srli t2, s0, 28  # en üst nibble (32-bit için 28, 24, 20... sırasıyla kaydıracağız)
+    li t3, 10
+    blt t2, t3, 2f
+    addi t2, t2, 55  # 'A'-10
+    j 3f
+2:  addi t2, t2, 48  # '0'
+3:  sb t2, 0(t0)
+    addi t0, t0, 1
+    slli s0, s0, 4   # sonraki nibble
+    addi t1, t1, -1
+    bnez t1, 1b
+
+    # null terminate
+    sb zero, 0(t0)
+
+    la a0, hex_buffer
+    jal ra, UART_send_string
+
+    la a0, newline
+    jal ra, UART_send_string
+
+    lw ra, 28(sp)
+    lw s0, 24(sp)
+    lw s1, 20(sp)
+    addi sp, sp, 32
+    ret
+
+    .section .bss
+    .align 4
+hex_buffer: .space 12
+
+    .section .rodata
+newline: .asciz "\n"

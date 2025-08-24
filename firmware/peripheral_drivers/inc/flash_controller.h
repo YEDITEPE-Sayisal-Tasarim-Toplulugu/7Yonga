@@ -37,7 +37,7 @@
 typedef struct {
     uint8_t ManufactureID;
     uint8_t DeviceID;
-} FLASH_RDID_DATA;-old
+} FLASH_RDID_DATA;
 
 int FLASH_read_REMS(qspi_driver_t *driver, FLASH_RDID_DATA *res_type);
 uint8_t FLASH_read_RES(qspi_driver_t *driver, FLASH_RDID_DATA *res_type);

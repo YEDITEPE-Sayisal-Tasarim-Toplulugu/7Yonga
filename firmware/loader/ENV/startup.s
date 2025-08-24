@@ -2,6 +2,9 @@
 .global _startup
 
 _startup:
+    la t0, trap_handler
+    csrw mtvec, t0
+
     la sp, _estack
     
     # uart modulüne yazma
@@ -11,15 +14,16 @@ _startup:
     li a1, 0                # stop bit
     sw a1, 0x04(a0)
 
-    la a0, string_hello_data
-    jal ra, UART_send_string
+    # la a0, string_hello_data
+    # jal ra, UART_send_string
 
 # eğer uart programmer varsa doğrudan atlama yapılır
 #ifdef IMMEDIATELY_JUMP_TO_SRAM
-    li a0, 0x00000800       # sram start
-    jalr x0, 0(a0)
-#endif
+    li a0, 0x07000000       # sram start
+    jalr ra, 0(a0)
+#else
     call main
+#endif
 
     j .              # terminate program
 
@@ -31,5 +35,5 @@ _startup:
 
     .section .rodata
 string_hello_data:
-    .asciz          "Hello World!\n"
+    .asciz          "H!\n"
 

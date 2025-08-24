@@ -186,9 +186,9 @@ module soc_top
     logic [AXI_SLAVE_COUNT-1:0]             m_axi_rvalid;
     logic [AXI_SLAVE_COUNT-1:0]             m_axi_rready;
     
-    logic mem_write_enable_w;
-    logic [31:0] mem_write_addr_w;
-    logic [31:0] mem_write_data_w;
+    (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) logic mem_write_enable_w;
+    (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) logic [31:0] mem_write_addr_w;
+    (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) logic [31:0] mem_write_data_w;
     
 generate
     if (soc_config_pkg::UART_PROGRAMMER_EXISTS) begin : UART_PROGRAMMER

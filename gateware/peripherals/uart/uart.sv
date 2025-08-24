@@ -325,7 +325,9 @@ module uart (
                     rx_counter <= 32'd0;
                     rx_bit_idx <= 3'd0;
                     
-                    if (uart_rx == 1'b0 && !rx_active) begin
+                    if (uart_rx == 1'b0 && !rx_active & 
+                        ~(rx_done | rx_data_updated | uart_cfg_reg[1])
+                    ) begin
                         rx_state <= START;
                         rx_active <= 1'b1;
                         $display("RX: Start bit detected");

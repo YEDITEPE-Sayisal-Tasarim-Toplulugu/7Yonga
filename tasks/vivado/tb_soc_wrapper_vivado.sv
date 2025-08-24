@@ -42,19 +42,21 @@ module tb_soc_wrapper_vivado();
     logic [7:0] TEST_uart_tx_data_i;
     logic TEST_data_sent_o;
     
-    soc_wrapper_vivado DUT
-    (
-        .clk                ( `CLK              ),
-        .resetn             ( `RST              ),
-        .rx                 ( uart0_rx          ),
-        .tx                 ( uart0_tx          ),
+    soc_wrapper_vivado 
+    #(
+        .CLOCK_GENERATER_ENABLE ( 0                 )
+    )DUT (
+        .clk                    ( `CLK              ),
+        .resetn                 ( `RST              ),
+        .rx                     ( uart0_rx          ),
+        .tx                     ( uart0_tx          ),
         
-        .qspi_sclk_out      ( ),
-        .qspi_cs_n_out      ( ),
-        .qspi_data          ( ),
-        .programmer_mode    ( programmer_mode   ),
+        .qspi_sclk_out          ( ),
+        .qspi_cs_n_out          ( ),
+        .qspi_data              ( ),
+        .programmer_mode        ( programmer_mode   ),
         
-        .clk_o              ( clk_w             )
+        .clk_o                  ( clk_w             )
     );
     
     uart_monitor #(
@@ -86,7 +88,7 @@ module tb_soc_wrapper_vivado();
         .uart_tx                    ( uart0_rx                  )
     );
     
-    localparam PROGRAM_DEPTH = 4;
+    localparam PROGRAM_DEPTH = 0;
     logic [31:0] program_data [0:PROGRAM_DEPTH-1];
     logic [7:0] test_program [$];
     
@@ -101,15 +103,19 @@ module tb_soc_wrapper_vivado();
     
     always begin
         #(1ps);
-        TEST_data_tx_start_i = 1'b1;
-        TEST_uart_tx_data_i = test_program[program_counter];
-        wait (TEST_data_sent_o == 1'b1);
-        @(posedge clk_w);
-        #(1ps);
-        program_counter++;
+        if (programmer_mode) begin
+            TEST_data_tx_start_i = 1'b1;
+            TEST_uart_tx_data_i = test_program[program_counter];
+            wait (TEST_data_sent_o == 1'b1);
+            @(posedge clk_w);
+            #(1ps);
+            program_counter++;
+        end
     end
     
     initial begin
+        TEST_data_tx_start_i = 1'b0;
+        
         program_length = test_program.size();
         program_counter=0;
         
@@ -121,10 +127,11 @@ module tb_soc_wrapper_vivado();
         
         `RST = 0;
         programmer_mode = 0;
+        TEST_data_tx_start_i = 1'b0;
         @(posedge clk_w);
         `RST = 1;
         
-        repeat (50) @(posedge clk_w);
+        repeat (50000000) @(posedge clk_w);
         
         $display("[SIM] done.");
         $finish;

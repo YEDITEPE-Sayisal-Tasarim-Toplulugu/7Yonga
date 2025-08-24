@@ -87,7 +87,7 @@ int QSPI_write_register_inbyte(qspi_driver_t *driver, uint8_t data, int index) {
 }
 
 uint8_t QSPI_read_register_inbyte(qspi_driver_t *driver, int index) {
-    QSPI_REGISTER_DATA_TYPE reg_data;
+    QSPI_REGISTER_DATA_TYPE reg_data = 0;
     uint8_t ret_data;
     QSPI_read_register(driver, &reg_data, index);
     ret_data = QSPI_REGISTER_READ_BYTE(reg_data, index);

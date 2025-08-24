@@ -78,6 +78,8 @@ module memory_model_soft
 
     logic [WORD_SIZE_BYTE*8-1 : 0] MEM [0:DEPTH-1];
     
+    initial $readmemh("C:/Users/mhfur/Desktop/github_cloneS/7Yonga/firmware/program1_basic/BUILD/program.mem", MEM);
+    
     logic [$clog2((SIZE_IN_KB*1024)/WORD_SIZE_BYTE) : 0] opAddr_w;
     assign opAddr_w = addra[$clog2((SIZE_IN_KB*1024)/WORD_SIZE_BYTE) : 0];
 

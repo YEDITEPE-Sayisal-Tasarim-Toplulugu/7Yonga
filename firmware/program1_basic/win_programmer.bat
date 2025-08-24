@@ -1,0 +1,10 @@
+@echo off
+rem Programmer settings
+set PYTHON=python
+set PY_FPGA_PROGRAMMER=../teknofest_uart_programmer_v1.py
+set PROGRAMMER_HEX_FILENAME=BUILD/program.mem
+set PROGRAMMER_PORT=COM8
+set PROGRAMMER_BAUDERATE=9600
+set PROGRAMMER_DELAY=200
+
+%PYTHON% %PY_FPGA_PROGRAMMER% --file %PROGRAMMER_HEX_FILENAME% --port %PROGRAMMER_PORT% --brate %PROGRAMMER_BAUDERATE% --delay %PROGRAMMER_DELAY%

@@ -1,12 +1,23 @@
+#include "Yonga7std.h"
 #include <stdint.h>
 
-volatile int data1 = 5;
-volatile int data2 = 2;
-volatile int data3 = 4;
+#define UART_BAUDE_RATE               9600
 
-void UART_send_string(const char *str);
+uart_driver_t uart_driver;
+
+int init( void ) {
+    uart_init(&uart_driver, YONGA7_UART_BASE, YONGA7_SOC_PERIPHERAL_FREQUENCY);
+    uart_set_baud_rate(&uart_driver, UART_BAUDE_RATE);
+    uart_set_stop_bits(&uart_driver, UART_STOP_BITS_1);
+
+    return 1;
+}
+
 
 int main( void ) {
-    UART_send_string("Hello From Sram!\n");
+    init();
+    uart_send_string(&uart_driver, "Hello From Sram!\n");
     return 0;
 }
+
+

@@ -21,6 +21,9 @@
 
 
 module soc_wrapper_vivado
+    #(parameter 
+            CLOCK_GENERATER_ENABLE = 1
+    )
     (
         input wire clk,
         input wire resetn,
@@ -35,16 +38,21 @@ module soc_wrapper_vivado
     
     logic reset_ni;
     logic clk_gen_w;
-    
-    assign clk_o = clk_gen_w;
-    
-    clk_gen CLOCK_GENERATOR
-    (
-        // Clock out ports
-        .clk_o                      ( clk_gen_w     ),     // output clk_o
-        // Clock in ports
-        .clk_i                      ( clk           )      // input clk_i
-    );
+    logic core_rx, programmer_rx;
+
+generate
+    if (CLOCK_GENERATER_ENABLE) begin : CLOCK_GEN
+        clk_gen CLOCK_GENERATOR
+        (
+            // Clock out ports
+            .clk_o                      ( clk_gen_w     ),     // output clk_o
+            // Clock in ports
+            .clk_i                      ( clk           )      // input clk_i
+        );
+    end else begin : CLOCK_BYPASS
+        assign clk_gen_w = clk;
+    end
+endgenerate
     
     (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) logic [3:0] qspi_do_w;
     (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) logic [3:0] qspi_di_w;
@@ -53,11 +61,15 @@ module soc_wrapper_vivado
     (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) wire qspi_sclk;
     (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) wire qspi_cs_n;
 
+    assign clk_o            = clk_gen_w;
     
-    assign qspi_sclk_out = qspi_sclk;
-    assign qspi_cs_n_out = qspi_cs_n;
+    assign qspi_sclk_out    = qspi_sclk;
+    assign qspi_cs_n_out    = qspi_cs_n;
     
-    assign reset_ni = /*(~programmer_mode) & */ resetn;
+    assign core_rx          = (programmer_mode) ? 1'b1 : rx;
+    assign programmer_rx    = (programmer_mode) ? rx : 1'b1;
+    
+    assign reset_ni = (~programmer_mode) & resetn;
     
     soc_top SOC (
         .clk_i                      ( clk_gen_w         ),
@@ -66,10 +78,10 @@ module soc_wrapper_vivado
         // UART Programmmer
         .programmer_reset_ni        ( resetn            ),
         .programmer_enable_i        ( programmer_mode   ),
-        .programmer_rx              ( rx                ),
+        .programmer_rx              ( programmer_rx     ),
         
         .peripheral_uart_tx_o       ( tx                ), 
-        .peripheral_uart_rx_i       ( rx                ),
+        .peripheral_uart_rx_i       ( core_rx           ),
         
         // QSPI Interface
         .peripheral_qspi_sclk_o     ( qspi_sclk         ),

@@ -20,4 +20,4 @@ $(TARGET): $(OUTDIR) $(TEMPFILE) $(BINFILE)
 	$(PYTHON) $(GEN) --bin $(BINFILE) --template $(TEMPFILE) --o $@
 
 clean:
-	rm $(OUTFILE)
+	rm $(TARGET)
