@@ -83,14 +83,14 @@ module soc_top
     logic                                   core_instr_rvalid_w;
     logic [31:0]                            core_instr_rdata_w;
     
-    logic [CORE_ADDR_WIDTH-1:0]             core_data_addr_w;
-    logic                                   core_data_req_w;
-    logic                                   core_data_we_w;
-    logic [CORE_BE_WIDTH-1:0]               core_data_be_w;
-    logic [CORE_DATA_WIDTH-1:0]             core_data_wdata_w;
-    logic                                   core_data_gnt_w;
-    logic                                   core_data_rvalid_w;
-    logic [CORE_DATA_WIDTH-1:0]             core_data_rdata_w;
+    (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) logic [CORE_ADDR_WIDTH-1:0]             core_data_addr_w;
+    (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) logic                                   core_data_req_w;
+    (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) logic                                   core_data_we_w;
+    (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) logic [CORE_BE_WIDTH-1:0]               core_data_be_w;
+    (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) logic [CORE_DATA_WIDTH-1:0]             core_data_wdata_w;
+    (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) logic                                   core_data_gnt_w;
+    (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) logic                                   core_data_rvalid_w;
+    (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) logic [CORE_DATA_WIDTH-1:0]             core_data_rdata_w;
     
     /*
      * AXI slave interfaces

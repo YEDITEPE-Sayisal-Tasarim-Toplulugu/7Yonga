@@ -40,7 +40,7 @@ typedef struct {
 } FLASH_RDID_DATA;
 
 int FLASH_read_REMS(qspi_driver_t *driver, FLASH_RDID_DATA *res_type);
-uint8_t FLASH_read_RES(qspi_driver_t *driver, FLASH_RDID_DATA *res_type);
+uint8_t FLASH_read_RES(qspi_driver_t *driver);
 int FLASH_write_enable(qspi_driver_t *driver);
 int FLASH_write_disable(qspi_driver_t *driver);
 int FLASH_clear_status_register(qspi_driver_t *driver);
@@ -48,8 +48,9 @@ int FLASH_software_reset(qspi_driver_t *driver);
 uint8_t FLASH_read_status_reg1(qspi_driver_t *driver);
 uint8_t FLASH_read_status_reg2(qspi_driver_t *driver);
 uint8_t FLASH_read_configure_reg(qspi_driver_t *driver);
+int FLASH_read_register_with_addr(qspi_driver_t *driver, uint8_t *buffer, uint8_t inst, int addr, int data_size);
 int FLASH_read_register(qspi_driver_t *driver, uint8_t *buffer, uint8_t inst, int data_size);
-int FLASH_read_register_command(qspi_driver_t *driver, uint8_t *buffer, uint8_t inst, int dummyCount, int data_size);
+int FLASH_read_register_command(qspi_driver_t *driver, uint8_t *buffer, uint8_t inst, int addr, int dummyCount, int data_size);
 int FLASH_update_status_and_confg_regs(qspi_driver_t *driver);
 int FLASH_switch_QUAD_mode(qspi_driver_t *driver);
 int FLASH_switch_SINGLE_DOUBLE_mode(qspi_driver_t *driver);

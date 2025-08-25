@@ -213,6 +213,7 @@ set_property -dict {PACKAGE_PIN D4 IOSTANDARD LVCMOS33} [get_ports tx]
 #set_property -dict { PACKAGE_PIN L13   IOSTANDARD LVCMOS33 } [get_ports { QSPI_CSN }]; #IO_L6P_T0_FCS_B_14 Sch=qspi_csn
 
 
+
 create_debug_core u_ila_0 ila
 set_property ALL_PROBE_SAME_MU true [get_debug_cores u_ila_0]
 set_property ALL_PROBE_SAME_MU_CNT 1 [get_debug_cores u_ila_0]
@@ -224,37 +225,25 @@ set_property C_TRIGIN_EN false [get_debug_cores u_ila_0]
 set_property C_TRIGOUT_EN false [get_debug_cores u_ila_0]
 set_property port_width 1 [get_debug_ports u_ila_0/clk]
 connect_debug_port u_ila_0/clk [get_nets [list CLOCK_GEN.CLOCK_GENERATOR/inst/clk_o]]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe0]
-set_property port_width 30 [get_debug_ports u_ila_0/probe0]
-connect_debug_port u_ila_0/probe0 [get_nets [list {SOC/mem_write_addr_w[2]} {SOC/mem_write_addr_w[3]} {SOC/mem_write_addr_w[4]} {SOC/mem_write_addr_w[5]} {SOC/mem_write_addr_w[6]} {SOC/mem_write_addr_w[7]} {SOC/mem_write_addr_w[8]} {SOC/mem_write_addr_w[9]} {SOC/mem_write_addr_w[10]} {SOC/mem_write_addr_w[11]} {SOC/mem_write_addr_w[12]} {SOC/mem_write_addr_w[13]} {SOC/mem_write_addr_w[14]} {SOC/mem_write_addr_w[15]} {SOC/mem_write_addr_w[16]} {SOC/mem_write_addr_w[17]} {SOC/mem_write_addr_w[18]} {SOC/mem_write_addr_w[19]} {SOC/mem_write_addr_w[20]} {SOC/mem_write_addr_w[21]} {SOC/mem_write_addr_w[22]} {SOC/mem_write_addr_w[23]} {SOC/mem_write_addr_w[24]} {SOC/mem_write_addr_w[25]} {SOC/mem_write_addr_w[26]} {SOC/mem_write_addr_w[27]} {SOC/mem_write_addr_w[28]} {SOC/mem_write_addr_w[29]} {SOC/mem_write_addr_w[30]} {SOC/mem_write_addr_w[31]}]]
+set_property PROBE_TYPE DATA [get_debug_ports u_ila_0/probe0]
+set_property port_width 4 [get_debug_ports u_ila_0/probe0]
+connect_debug_port u_ila_0/probe0 [get_nets [list {qspi_di_w[0]} {qspi_di_w[1]} {qspi_di_w[2]} {qspi_di_w[3]}]]
 create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe1]
-set_property port_width 32 [get_debug_ports u_ila_0/probe1]
-connect_debug_port u_ila_0/probe1 [get_nets [list {SOC/mem_write_data_w[0]} {SOC/mem_write_data_w[1]} {SOC/mem_write_data_w[2]} {SOC/mem_write_data_w[3]} {SOC/mem_write_data_w[4]} {SOC/mem_write_data_w[5]} {SOC/mem_write_data_w[6]} {SOC/mem_write_data_w[7]} {SOC/mem_write_data_w[8]} {SOC/mem_write_data_w[9]} {SOC/mem_write_data_w[10]} {SOC/mem_write_data_w[11]} {SOC/mem_write_data_w[12]} {SOC/mem_write_data_w[13]} {SOC/mem_write_data_w[14]} {SOC/mem_write_data_w[15]} {SOC/mem_write_data_w[16]} {SOC/mem_write_data_w[17]} {SOC/mem_write_data_w[18]} {SOC/mem_write_data_w[19]} {SOC/mem_write_data_w[20]} {SOC/mem_write_data_w[21]} {SOC/mem_write_data_w[22]} {SOC/mem_write_data_w[23]} {SOC/mem_write_data_w[24]} {SOC/mem_write_data_w[25]} {SOC/mem_write_data_w[26]} {SOC/mem_write_data_w[27]} {SOC/mem_write_data_w[28]} {SOC/mem_write_data_w[29]} {SOC/mem_write_data_w[30]} {SOC/mem_write_data_w[31]}]]
+set_property PROBE_TYPE DATA [get_debug_ports u_ila_0/probe1]
+set_property port_width 4 [get_debug_ports u_ila_0/probe1]
+connect_debug_port u_ila_0/probe1 [get_nets [list {qspi_data_oen[0]} {qspi_data_oen[1]} {qspi_data_oen[2]} {qspi_data_oen[3]}]]
 create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe2]
+set_property PROBE_TYPE DATA [get_debug_ports u_ila_0/probe2]
 set_property port_width 4 [get_debug_ports u_ila_0/probe2]
 connect_debug_port u_ila_0/probe2 [get_nets [list {qspi_do_w[0]} {qspi_do_w[1]} {qspi_do_w[2]} {qspi_do_w[3]}]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe3]
-set_property port_width 4 [get_debug_ports u_ila_0/probe3]
-connect_debug_port u_ila_0/probe3 [get_nets [list {qspi_di_w[0]} {qspi_di_w[1]} {qspi_di_w[2]} {qspi_di_w[3]}]]
+set_property port_width 1 [get_debug_ports u_ila_0/probe3]
+connect_debug_port u_ila_0/probe3 [get_nets [list qspi_cs_n]]
 create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe4]
-set_property port_width 4 [get_debug_ports u_ila_0/probe4]
-connect_debug_port u_ila_0/probe4 [get_nets [list {qspi_data_oen[0]} {qspi_data_oen[1]} {qspi_data_oen[2]} {qspi_data_oen[3]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe5]
-set_property port_width 1 [get_debug_ports u_ila_0/probe5]
-connect_debug_port u_ila_0/probe5 [get_nets [list SOC/mem_write_enable_w]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe6]
-set_property port_width 1 [get_debug_ports u_ila_0/probe6]
-connect_debug_port u_ila_0/probe6 [get_nets [list qspi_cs_n]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe7]
-set_property port_width 1 [get_debug_ports u_ila_0/probe7]
-connect_debug_port u_ila_0/probe7 [get_nets [list qspi_sclk]]
+set_property PROBE_TYPE DATA [get_debug_ports u_ila_0/probe4]
+set_property port_width 1 [get_debug_ports u_ila_0/probe4]
+connect_debug_port u_ila_0/probe4 [get_nets [list qspi_sclk]]
 set_property C_CLK_INPUT_FREQ_HZ 300000000 [get_debug_cores dbg_hub]
 set_property C_ENABLE_CLK_DIVIDER false [get_debug_cores dbg_hub]
 set_property C_USER_SCAN_CHAIN 1 [get_debug_cores dbg_hub]

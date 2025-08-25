@@ -33,7 +33,7 @@ module soc_wrapper_vivado
         output wire qspi_cs_n_out,
         inout wire [3:0] qspi_data,
         input wire programmer_mode
-        , output wire clk_o
+        //, output wire clk_o
     );
     
     logic reset_ni;

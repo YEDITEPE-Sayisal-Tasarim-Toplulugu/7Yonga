@@ -47,8 +47,8 @@ localparam addr_rule_t PERIPHERALS_TOP_ADDR_RULE = '{
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // AXI4-Lite Çevre Birimleri Adres Kuralları
 localparam addr_rule_t AXIL_UART_ADDR_RULE = '{
-    32'h0001_0000,
-    32'h0001_0030
+    32'h1001_0000,
+    32'h1001_0030
 };
 
 endpackage

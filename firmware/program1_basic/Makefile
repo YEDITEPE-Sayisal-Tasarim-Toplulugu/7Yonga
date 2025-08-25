@@ -37,7 +37,7 @@ OBJS  = $(patsubst $(SRC_DIR)/%.s, $(OBJ_DIR)/%.o, $(filter %.s,$(SRCS))) \
 
 # Flags
 ASFLAGS  = -march=$(RV_MODE) -mabi=$(MABI_MODE)
-CFLAGS   = $(ASFLAGS) $(INCLUDES) -nostdlib -Wall -O0
+CFLAGS   = $(ASFLAGS) $(INCLUDES) -nostdlib -Wall -O2
 LDFLAGS  = $(ASFLAGS) $(INCLUDES) -nostdlib -T $(LINKER_SCRIPT)
 
 PYTHON   = python3

@@ -9,7 +9,7 @@ volatile uint8_t FLASH_configure_register_value;
 int FLASH_read_REMS(qspi_driver_t *driver, FLASH_RDID_DATA *res_type) {
     uint8_t data[2];
 
-    FLASH_read_register(driver, data, FLASH_ReadIdentification_REMS, 2);
+    FLASH_read_register_with_addr(driver, data, FLASH_ReadIdentification_REMS, (0|FLASH_ADDR_VALID), 2);
 
     res_type->ManufactureID = data[0];
     res_type->DeviceID      = data[1];
@@ -17,9 +17,9 @@ int FLASH_read_REMS(qspi_driver_t *driver, FLASH_RDID_DATA *res_type) {
     return 0;
 }
 
-uint8_t FLASH_read_RES(qspi_driver_t *driver, FLASH_RDID_DATA *res_type) {
+uint8_t FLASH_read_RES(qspi_driver_t *driver) {
     uint8_t res_data;
-    FLASH_read_register_command(driver, &res_data, FLASH_ReadElectronicSignature_RES, 3, 1);
+    FLASH_read_register_command(driver, &res_data, FLASH_ReadElectronicSignature_RES, 0, 3, 1);
     return res_data;
 }
 
@@ -62,11 +62,15 @@ uint8_t FLASH_read_configure_reg(qspi_driver_t *driver) {
     return FLASH_configure_register_value;
 }
 
-int FLASH_read_register(qspi_driver_t *driver, uint8_t *buffer, uint8_t inst, int data_size) {
-    return FLASH_read_register_command(driver, buffer, inst, 0, data_size);
+int FLASH_read_register_with_addr(qspi_driver_t *driver, uint8_t *buffer, uint8_t inst, int addr, int data_size) {
+    return FLASH_read_register_command(driver, buffer, inst, addr, 0, data_size);
 }
 
-int FLASH_read_register_command(qspi_driver_t *driver, uint8_t *buffer, uint8_t inst, int dummyCount, int data_size) {
+int FLASH_read_register(qspi_driver_t *driver, uint8_t *buffer, uint8_t inst, int data_size) {
+    return FLASH_read_register_command(driver, buffer, inst, 0, 0, data_size);
+}
+
+int FLASH_read_register_command(qspi_driver_t *driver, uint8_t *buffer, uint8_t inst, int addr, int dummyCount, int data_size) {
     QSPI_COMMAND cmd;
 
     cmd.instruction         = inst;
@@ -74,7 +78,7 @@ int FLASH_read_register_command(qspi_driver_t *driver, uint8_t *buffer, uint8_t 
     cmd.data_direction      = QSPI_OP_READ;
     cmd.dummy_cycle_count   = dummyCount;
     cmd.data_size           = data_size;
-    cmd.address             = 0;
+    cmd.address             = addr;
 
     QSPI_send_command(driver, cmd);
     QSPI_wait_transaction(driver);

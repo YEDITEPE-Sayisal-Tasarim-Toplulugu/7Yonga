@@ -62,6 +62,7 @@ typedef struct
 #define QSPI_PAGE_SIZE           256
 #define QSPI_SECTOR_SIZE         4096
 #define QSPI_MAX_ADDRESS         0xFFFFFF  // 24-bit addressing
+#define FLASH_ADDR_VALID                            (1<<31)
 
 #define QSPI_ADDRESS_TO_PAGE(addr)    ((addr) / QSPI_PAGE_SIZE)
 #define QSPI_ADDRESS_TO_SECTOR(addr)  ((addr) / QSPI_SECTOR_SIZE)
@@ -87,7 +88,7 @@ typedef struct
 #define QSPI_CCR_STA_MASK           0x01
 #define QSPI_CCR_STA_SHIFT          31
 
-#define QSPI_ADR_DATA_MASK          QSPI_MAX_ADDRESS
+#define QSPI_ADR_DATA_MASK          (QSPI_MAX_ADDRESS | FLASH_ADDR_VALID)
 #define QSPI_ADR_DATA_SHIFT         0
 
 /**

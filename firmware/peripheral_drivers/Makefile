@@ -19,7 +19,7 @@ OBJ_DIR 			= obj
 RV_MODE   			= rv32imzicsr
 MABI_MODE 			= ilp32
 
-CFLAGS    			= -march=$(RV_MODE) -mabi=$(MABI_MODE) -Wall -O0 -nostdlib -nostartfiles -ffreestanding -I$(INC_DIR)
+CFLAGS    			= -march=$(RV_MODE) -mabi=$(MABI_MODE) -Wall -O2 -nostdlib -nostartfiles -ffreestanding -I$(INC_DIR)
 ASFLAGS   			= -march=$(RV_MODE) -mabi=$(MABI_MODE)
 
 # Diziler	
