@@ -22,7 +22,8 @@
 
 module soc_wrapper_vivado
     #(parameter 
-            CLOCK_GENERATER_ENABLE = 1
+            CLOCK_GENERATER_ENABLE = 1,
+            QSPI_HARDWARED_TO_0 = 0
     )
     (
         input wire clk,
@@ -33,7 +34,6 @@ module soc_wrapper_vivado
         output wire qspi_cs_n_out,
         inout wire [3:0] qspi_data,
         input wire programmer_mode
-        //, output wire clk_o
     );
     
     logic reset_ni;
@@ -61,8 +61,6 @@ endgenerate
     (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) wire qspi_sclk;
     (* DONT_TOUCH="TRUE", MARK_DEBUG="TRUE" *) wire qspi_cs_n;
 
-    assign clk_o            = clk_gen_w;
-    
     assign qspi_sclk_out    = qspi_sclk;
     assign qspi_cs_n_out    = qspi_cs_n;
     
@@ -92,13 +90,17 @@ endgenerate
     );
     
     generate
-        for (genvar k=0; k<4; k++) begin : IOBUFF
-            vivado_iobuf VIVADO_IOBUFF (
-                .I      ( qspi_do_w[k]      ),
-                .T      ( qspi_data_oen[k]  ), // 3-state enable input, high=input, low=output
-                .O      ( qspi_di_w[k]      ),
-                .IO     ( qspi_data[k]      )
-            );
+        if (QSPI_HARDWARED_TO_0) begin : TEST
+            assign qspi_di_w = 0;
+        end else begin
+            for (genvar k=0; k<4; k++) begin : IOBUFF
+                vivado_iobuf VIVADO_IOBUFF (
+                    .I      ( qspi_do_w[k]      ),
+                    .T      ( qspi_data_oen[k]  ), // 3-state enable input, high=input, low=output
+                    .O      ( qspi_di_w[k]      ),
+                    .IO     ( qspi_data[k]      )
+                );
+            end
         end
     endgenerate
     

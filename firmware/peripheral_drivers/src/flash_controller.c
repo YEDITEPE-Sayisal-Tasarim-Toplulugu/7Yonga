@@ -19,7 +19,7 @@ int FLASH_read_REMS(qspi_driver_t *driver, FLASH_RDID_DATA *res_type) {
 
 uint8_t FLASH_read_RES(qspi_driver_t *driver) {
     uint8_t res_data;
-    FLASH_read_register_command(driver, &res_data, FLASH_ReadElectronicSignature_RES, 0, 3, 1);
+    FLASH_read_register_command(driver, &res_data, FLASH_ReadElectronicSignature_RES, 0, 3*8, 1);
     return res_data;
 }
 

@@ -287,7 +287,7 @@ module qspi_master #(
             end
             
             DUMMY_CYCLES: begin
-                if (sclk_negedge && dummy_cnt == qspi_ccr.dummy_cycles - 1'b1) begin
+                if (sclk_negedge && dummy_cnt == qspi_ccr.dummy_cycles /*- 1'b1*/) begin
                     if (qspi_ccr.data_mode != 2'b00) begin
                         next_state = TRANSFER_DATA;
                     end else begin
@@ -298,15 +298,16 @@ module qspi_master #(
             
             TRANSFER_DATA: begin
                 // 🔥 ŞARTNAME DÜZELT: data_length+1 kadar byte
-                if (sclk_negedge && data_cnt > (qspi_ccr.data_length + 9'd1)) begin
+                // if (sclk_negedge && data_cnt > (qspi_ccr.data_length + 9'd1)) begin
+                if (sclk_negedge && data_cnt >= (qspi_ccr.data_length + 9'd1)) begin
                     next_state = WAIT_COMPLETE;
                 end
             end
             
             WAIT_COMPLETE: begin
-                if (sclk_negedge) begin
+                //if (sclk_negedge) begin
                     next_state = IDLE;
-                end
+                //end
             end
             
             default: next_state = IDLE;
@@ -466,7 +467,7 @@ module qspi_master #(
                             dummy_cnt <= dummy_cnt + 1'b1;
                             
                             // Prepare for next state if this is the last dummy cycle
-                            if (dummy_cnt == qspi_ccr.dummy_cycles - 1'b1 && qspi_ccr.data_mode != 2'b00) begin
+                            if (dummy_cnt == qspi_ccr.dummy_cycles /*- 1'b1*/ && qspi_ccr.data_mode != 2'b00) begin
                                 if (qspi_ccr.read_write) begin
                                     // Write: load first byte
                                     shift_reg_tx <= qspi_dr[0][7:0];
@@ -730,11 +731,11 @@ module qspi_master #(
                     end
                     
                     WAIT_COMPLETE: begin
-                        if (sclk_negedge) begin
+                        //if (sclk_negedge) begin
                             qspi_cs_no <= 1'b1;
                             transaction_complete <= 1'b1;
                             busy <= 1'b0;
-                        end
+                        //end
                     end
                     
                     default: begin

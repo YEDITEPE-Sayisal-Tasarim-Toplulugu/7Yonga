@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 #define UART_BAUDE_RATE                 9600
-#define QSPI_PRESCALER                  32
+#define QSPI_PRESCALER                  63
 
 uart_driver_t uart_driver;
 qspi_driver_t qspi_driver;
@@ -28,7 +28,7 @@ int main( void ) {
     uart_println(&uart_driver);
     uart_print_hex(&uart_driver, flash_rdid_data.DeviceID, 1);
     uart_println(&uart_driver);
-    FLASH_read_RES(&qspi_driver);
+    //FLASH_read_RES(&qspi_driver);
     uart_send_string(&uart_driver, "done.\n");
     
     return 0;

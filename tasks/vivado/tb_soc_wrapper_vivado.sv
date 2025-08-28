@@ -44,7 +44,8 @@ module tb_soc_wrapper_vivado();
     
     soc_wrapper_vivado 
     #(
-        .CLOCK_GENERATER_ENABLE ( 0                 )
+        .CLOCK_GENERATER_ENABLE ( 0                 ),
+        .QSPI_HARDWARED_TO_0    ( 1                 )
     )DUT (
         .clk                    ( `CLK              ),
         .resetn                 ( `RST              ),
@@ -54,23 +55,21 @@ module tb_soc_wrapper_vivado();
         .qspi_sclk_out          ( ),
         .qspi_cs_n_out          ( ),
         .qspi_data              ( ),
-        .programmer_mode        ( programmer_mode   ),
-        
-        .clk_o                  ( clk_w             )
+        .programmer_mode        ( programmer_mode   )
     );
     
     uart_monitor #(
         .CLK_FREQ_HZ        ( 1_000_000*50  ),
         .BAUD_RATE          ( 9600          )
     ) UART_MONITOR (
-        .clk                ( clk_w         ),
+        .clk                ( `CLK         ),
         .rst_n              ( `RST          ),
         .uart_line          ( uart0_tx      )
     );
     
     uart_engine TRANSMITER_UART (
         // Clock and reset signals
-        .aclk                       ( clk_w                     ),
+        .aclk                       ( `CLK                     ),
         .aresetn                    ( `RST                      ),
     
         .uart_cpb_reg               ( PROGRAMMER_CPB_DATA       ),  // Clock-per-bit register
@@ -107,7 +106,7 @@ module tb_soc_wrapper_vivado();
             TEST_data_tx_start_i = 1'b1;
             TEST_uart_tx_data_i = test_program[program_counter];
             wait (TEST_data_sent_o == 1'b1);
-            @(posedge clk_w);
+            @(posedge `CLK);
             #(1ps);
             program_counter++;
         end
@@ -128,10 +127,10 @@ module tb_soc_wrapper_vivado();
         `RST = 0;
         programmer_mode = 0;
         TEST_data_tx_start_i = 1'b0;
-        @(posedge clk_w);
+        @(posedge `CLK);
         `RST = 1;
         
-        repeat (50000000) @(posedge clk_w);
+        repeat (50000000) @(posedge `CLK);
         
         $display("[SIM] done.");
         $finish;
